@@ -1,0 +1,7 @@
+interface:
+  display_name: "Web Launch Review"
+  short_description: "Mobile, visual, SEO, paid-traffic, and launch QA."
+  default_prompt: "Review this site for launch readiness across mobile UI, SEO, performance, accessibility, paid-traffic continuity, and conversion clarity."
+
+policy:
+  allow_implicit_invocation: true

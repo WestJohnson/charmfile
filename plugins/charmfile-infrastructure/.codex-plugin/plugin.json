@@ -1,0 +1,31 @@
+{
+  "name": "charmfile-infrastructure",
+  "version": "0.1.0",
+  "description": "Inspect VPS health, capacity, services, backups, and operational risk using live evidence.",
+  "author": {
+    "name": "Charmfile contributors",
+    "url": "https://github.com/WestJohnson/charmfile"
+  },
+  "homepage": "https://github.com/WestJohnson/charmfile",
+  "repository": "https://github.com/WestJohnson/charmfile",
+  "license": "Apache-2.0",
+  "keywords": ["infrastructure", "vps", "operations", "health-check"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Charmfile Infrastructure",
+    "shortDescription": "Evidence-backed VPS health and capacity checks.",
+    "longDescription": "Audit server capacity, services, containers, logs, backups, updates, and security posture before recommending or making scoped operational changes.",
+    "developerName": "Charmfile contributors",
+    "category": "Developer Tools",
+    "capabilities": ["Read", "Write"],
+    "websiteURL": "https://github.com/WestJohnson/charmfile",
+    "privacyPolicyURL": "https://github.com/WestJohnson/charmfile/blob/main/PRIVACY.md",
+    "termsOfServiceURL": "https://github.com/WestJohnson/charmfile/blob/main/LICENSE",
+    "defaultPrompt": [
+      "Run a read-only health check on this VPS.",
+      "Explain what is consuming server capacity.",
+      "Verify this production service after the change."
+    ],
+    "brandColor": "#176548"
+  }
+}

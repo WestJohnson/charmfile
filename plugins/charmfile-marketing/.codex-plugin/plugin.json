@@ -1,0 +1,31 @@
+{
+  "name": "charmfile-marketing",
+  "version": "0.1.0",
+  "description": "Audit marketing performance with evidence, live-account safety, and cross-channel reconciliation.",
+  "author": {
+    "name": "Charmfile contributors",
+    "url": "https://github.com/WestJohnson/charmfile"
+  },
+  "homepage": "https://github.com/WestJohnson/charmfile",
+  "repository": "https://github.com/WestJohnson/charmfile",
+  "license": "Apache-2.0",
+  "keywords": ["marketing", "analytics", "ads", "seo"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Charmfile Marketing",
+    "shortDescription": "Evidence-first ads, analytics, and SEO workflows.",
+    "longDescription": "Investigate ads and analytics, reconcile performance across sources, collect scoped DataForSEO evidence, and review websites for launch while keeping live mutations explicit and verifiable.",
+    "developerName": "Charmfile contributors",
+    "category": "Productivity",
+    "capabilities": ["Read", "Write"],
+    "websiteURL": "https://github.com/WestJohnson/charmfile",
+    "privacyPolicyURL": "https://github.com/WestJohnson/charmfile/blob/main/PRIVACY.md",
+    "termsOfServiceURL": "https://github.com/WestJohnson/charmfile/blob/main/LICENSE",
+    "defaultPrompt": [
+      "Diagnose this cross-channel performance change.",
+      "Audit this ad account without making changes.",
+      "Research this market with scoped demand evidence."
+    ],
+    "brandColor": "#176548"
+  }
+}

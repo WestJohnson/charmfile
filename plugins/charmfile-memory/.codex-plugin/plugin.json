@@ -1,0 +1,31 @@
+{
+  "name": "charmfile-memory",
+  "version": "0.1.0",
+  "description": "Add sanitized, searchable Obsidian memory with long-thread checkpoints and health gates.",
+  "author": {
+    "name": "Charmfile contributors",
+    "url": "https://github.com/WestJohnson/charmfile"
+  },
+  "homepage": "https://github.com/WestJohnson/charmfile",
+  "repository": "https://github.com/WestJohnson/charmfile",
+  "license": "Apache-2.0",
+  "keywords": ["agents", "memory", "obsidian", "checkpoints"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Charmfile Memory",
+    "shortDescription": "Durable memory without raw transcript storage.",
+    "longDescription": "Set up and operate the optional Codex Obsidian Sidecar: sanitized durable notes, long-thread checkpoints, freshness envelopes, decision-impact previews, Basic Memory indexing, and scored health checks.",
+    "developerName": "Charmfile contributors",
+    "category": "Productivity",
+    "capabilities": ["Read", "Write"],
+    "websiteURL": "https://github.com/WestJohnson/charmfile",
+    "privacyPolicyURL": "https://github.com/WestJohnson/charmfile/blob/main/PRIVACY.md",
+    "termsOfServiceURL": "https://github.com/WestJohnson/charmfile/blob/main/LICENSE",
+    "defaultPrompt": [
+      "Set up durable Obsidian memory for Codex.",
+      "Check the health of my memory system.",
+      "Find the decision that shaped this project."
+    ],
+    "brandColor": "#176548"
+  }
+}

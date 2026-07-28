@@ -1,0 +1,92 @@
+{
+  "name": "charmfile",
+  "interface": {
+    "displayName": "Charmfile"
+  },
+  "plugins": [
+    {
+      "name": "charmfile-core",
+      "source": {
+        "source": "local",
+        "path": "./plugins/charmfile-core"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    },
+    {
+      "name": "charmfile-memory",
+      "source": {
+        "source": "local",
+        "path": "./plugins/charmfile-memory"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    },
+    {
+      "name": "charmfile-frontend",
+      "source": {
+        "source": "local",
+        "path": "./plugins/charmfile-frontend"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Developer Tools"
+    },
+    {
+      "name": "charmfile-marketing",
+      "source": {
+        "source": "local",
+        "path": "./plugins/charmfile-marketing"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    },
+    {
+      "name": "charmfile-research",
+      "source": {
+        "source": "local",
+        "path": "./plugins/charmfile-research"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    },
+    {
+      "name": "charmfile-infrastructure",
+      "source": {
+        "source": "local",
+        "path": "./plugins/charmfile-infrastructure"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Developer Tools"
+    },
+    {
+      "name": "charmfile-threejs",
+      "source": {
+        "source": "local",
+        "path": "./plugins/charmfile-threejs"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Developer Tools"
+    }
+  ]
+}

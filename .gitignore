@@ -1,0 +1,12 @@
+.DS_Store
+.idea/
+.vscode/
+.pytest_cache/
+__pycache__/
+*.pyc
+*.log
+*.tmp
+*.backup.*
+dist/*
+!dist/.gitkeep
+.charmfile-test/

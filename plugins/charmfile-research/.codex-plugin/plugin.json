@@ -1,0 +1,31 @@
+{
+  "name": "charmfile-research",
+  "version": "0.1.0",
+  "description": "Produce concise, source-backed technical and product research with practical recommendations.",
+  "author": {
+    "name": "Charmfile contributors",
+    "url": "https://github.com/WestJohnson/charmfile"
+  },
+  "homepage": "https://github.com/WestJohnson/charmfile",
+  "repository": "https://github.com/WestJohnson/charmfile",
+  "license": "Apache-2.0",
+  "keywords": ["research", "sources", "technical-evaluation"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Charmfile Research",
+    "shortDescription": "Research that ends in a grounded recommendation.",
+    "longDescription": "Use primary sources, compare independent source families, distinguish fact from inference, and turn current technical or product research into a practical next step.",
+    "developerName": "Charmfile contributors",
+    "category": "Productivity",
+    "capabilities": ["Read"],
+    "websiteURL": "https://github.com/WestJohnson/charmfile",
+    "privacyPolicyURL": "https://github.com/WestJohnson/charmfile/blob/main/PRIVACY.md",
+    "termsOfServiceURL": "https://github.com/WestJohnson/charmfile/blob/main/LICENSE",
+    "defaultPrompt": [
+      "Research this question and recommend a practical next step.",
+      "Compare these tools using current primary sources.",
+      "Turn this technical research into a one-page decision brief."
+    ],
+    "brandColor": "#176548"
+  }
+}

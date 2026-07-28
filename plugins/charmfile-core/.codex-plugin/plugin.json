@@ -1,0 +1,31 @@
+{
+  "name": "charmfile-core",
+  "version": "0.1.0",
+  "description": "Install a small, safe Codex operating configuration and lightweight workflow rules.",
+  "author": {
+    "name": "Charmfile contributors",
+    "url": "https://github.com/WestJohnson/charmfile"
+  },
+  "homepage": "https://github.com/WestJohnson/charmfile",
+  "repository": "https://github.com/WestJohnson/charmfile",
+  "license": "Apache-2.0",
+  "keywords": ["agents", "codex", "configuration", "workflow"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Charmfile Core",
+    "shortDescription": "A small agent setup that works like magic.",
+    "longDescription": "Install conservative global agent guidance, a deterministic setup doctor, browser and verification defaults, and a lightweight workflow for choosing between prompts, skills, tools, memory, and subagents.",
+    "developerName": "Charmfile contributors",
+    "category": "Productivity",
+    "capabilities": ["Read", "Write"],
+    "websiteURL": "https://github.com/WestJohnson/charmfile",
+    "privacyPolicyURL": "https://github.com/WestJohnson/charmfile/blob/main/PRIVACY.md",
+    "termsOfServiceURL": "https://github.com/WestJohnson/charmfile/blob/main/LICENSE",
+    "defaultPrompt": [
+      "Set up my Charmfile configuration.",
+      "Health-check my Charmfile setup.",
+      "Explain which Charmfile layer fits this workflow."
+    ],
+    "brandColor": "#176548"
+  }
+}

@@ -1,0 +1,307 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+skill_dir="$(cd "$script_dir/.." && pwd)"
+guidance_template="$skill_dir/assets/AGENTS.block.md"
+secrets_source="$script_dir/codex-secrets"
+
+die() {
+  printf 'charmfile: %s\n' "$*" >&2
+  exit 1
+}
+
+usage() {
+  printf '%s\n' \
+    "Charmfile — a small agent setup that works like magic." \
+    "" \
+    "Usage:" \
+    "  charmfile plan    [--scope user|repo] [--repo PATH] [--with-secrets]" \
+    "  charmfile install [--scope user|repo] [--repo PATH] [--with-secrets] --yes" \
+    "  charmfile doctor  [--scope user|repo] [--repo PATH]" \
+    "" \
+    "Environment:" \
+    "  CHARMFILE_TARGET_HOME  Override the target home for testing or managed installs."
+}
+
+command_name="${1:-help}"
+if [ "$#" -gt 0 ]; then
+  shift
+fi
+
+scope="user"
+repo_path="$PWD"
+approved="false"
+with_secrets="false"
+
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --scope)
+      [ "$#" -ge 2 ] || die "--scope requires user or repo"
+      scope="$2"
+      shift 2
+      ;;
+    --repo)
+      [ "$#" -ge 2 ] || die "--repo requires a path"
+      repo_path="$2"
+      shift 2
+      ;;
+    --with-secrets)
+      with_secrets="true"
+      shift
+      ;;
+    --yes)
+      approved="true"
+      shift
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    *)
+      die "unknown option: $1"
+      ;;
+  esac
+done
+
+case "$scope" in
+  user)
+    target_home="${CHARMFILE_TARGET_HOME:-$HOME}"
+    guidance_target="$target_home/.codex/AGENTS.md"
+    secrets_target="$target_home/.local/bin/codex-secrets"
+    ;;
+  repo)
+    [ -d "$repo_path" ] || die "repository path does not exist: $repo_path"
+    guidance_target="$(cd "$repo_path" && pwd)/AGENTS.md"
+    target_home="${CHARMFILE_TARGET_HOME:-$HOME}"
+    secrets_target="$target_home/.local/bin/codex-secrets"
+    ;;
+  *)
+    die "--scope must be user or repo"
+    ;;
+esac
+
+[ -f "$guidance_template" ] || die "guidance template is missing"
+
+marker_count() {
+  local marker="$1"
+  local file_path="$2"
+  if [ ! -f "$file_path" ]; then
+    printf '0\n'
+    return
+  fi
+  grep -Fxc -- "$marker" "$file_path" || true
+}
+
+managed_markers_are_valid() {
+  local file_path="$1"
+  local start_count
+  local end_count
+  local start_line
+  local end_line
+
+  [ -f "$file_path" ] || return 1
+  start_count="$(marker_count '<!-- CHARMFILE:START -->' "$file_path")"
+  end_count="$(marker_count '<!-- CHARMFILE:END -->' "$file_path")"
+  [ "$start_count" -eq 1 ] && [ "$end_count" -eq 1 ] || return 1
+
+  start_line="$(grep -Fn -- '<!-- CHARMFILE:START -->' "$file_path" | cut -d: -f1)"
+  end_line="$(grep -Fn -- '<!-- CHARMFILE:END -->' "$file_path" | cut -d: -f1)"
+  [ "$start_line" -lt "$end_line" ]
+}
+
+planned_action() {
+  if [ ! -f "$guidance_target" ]; then
+    printf 'create'
+    return
+  fi
+  start_count="$(marker_count '<!-- CHARMFILE:START -->' "$guidance_target")"
+  end_count="$(marker_count '<!-- CHARMFILE:END -->' "$guidance_target")"
+  if [ "$start_count" -eq 0 ] && [ "$end_count" -eq 0 ]; then
+    printf 'append'
+  elif managed_markers_are_valid "$guidance_target"; then
+    printf 'update'
+  else
+    printf 'blocked-invalid-markers'
+  fi
+}
+
+show_plan() {
+  action="$(planned_action)"
+  printf 'Charmfile plan\n'
+  printf '  scope: %s\n' "$scope"
+  printf '  guidance target: %s\n' "$guidance_target"
+  printf '  guidance action: %s\n' "$action"
+  printf '  existing-file backup: %s.backup.<UTC timestamp>\n' "$guidance_target"
+  if [ "$with_secrets" = "true" ]; then
+    printf '  secret helper target: %s\n' "$secrets_target"
+  else
+    printf '  secret helper: unchanged\n'
+  fi
+  printf '  config.toml: unchanged\n'
+  printf '  model and sandbox: unchanged\n'
+  if [ "$action" = "blocked-invalid-markers" ]; then
+    return 1
+  fi
+}
+
+install_guidance() {
+  action="$(planned_action)"
+  [ "$action" != "blocked-invalid-markers" ] ||
+    die "target has malformed or duplicate Charmfile markers"
+
+  target_dir="$(dirname "$guidance_target")"
+  mkdir -p "$target_dir"
+  target_temp="$(mktemp "$target_dir/.charmfile-agents.XXXXXX")"
+
+  if [ "$action" = "create" ]; then
+    if [ "$scope" = "user" ]; then
+      guidance_heading='# Global Codex Guidance'
+    else
+      guidance_heading='# Repository Agent Guidance'
+    fi
+    {
+      printf '%s\n\n' "$guidance_heading"
+      sed -n '1,$p' "$guidance_template"
+    } > "$target_temp"
+  elif [ "$action" = "append" ]; then
+    {
+      sed -n '1,$p' "$guidance_target"
+      printf '\n\n'
+      sed -n '1,$p' "$guidance_template"
+    } > "$target_temp"
+  else
+    awk -v replacement="$guidance_template" '
+      $0 == "<!-- CHARMFILE:START -->" {
+        while ((getline replacement_line < replacement) > 0) {
+          print replacement_line
+        }
+        close(replacement)
+        skipping = 1
+        next
+      }
+      $0 == "<!-- CHARMFILE:END -->" {
+        skipping = 0
+        next
+      }
+      !skipping { print }
+    ' "$guidance_target" > "$target_temp"
+  fi
+
+  if [ -f "$guidance_target" ] && cmp -s "$guidance_target" "$target_temp"; then
+    rm -f "$target_temp"
+    printf 'Guidance is already current: %s\n' "$guidance_target"
+    return
+  fi
+
+  if [ -f "$guidance_target" ]; then
+    timestamp="$(date -u '+%Y%m%dT%H%M%SZ')"
+    backup_path="$guidance_target.backup.$timestamp"
+    cp -p "$guidance_target" "$backup_path"
+    printf 'Backup created: %s\n' "$backup_path"
+  fi
+
+  chmod 644 "$target_temp"
+  mv "$target_temp" "$guidance_target"
+  printf 'Guidance installed: %s\n' "$guidance_target"
+}
+
+install_secrets() {
+  if [ "$with_secrets" != "true" ]; then
+    return 0
+  fi
+  [ -f "$secrets_source" ] || die "codex-secrets source is missing"
+  secrets_dir="$(dirname "$secrets_target")"
+  mkdir -p "$secrets_dir"
+  if [ -f "$secrets_target" ] && cmp -s "$secrets_source" "$secrets_target"; then
+    printf 'Secret helper is already current: %s\n' "$secrets_target"
+    return
+  fi
+  if [ -f "$secrets_target" ]; then
+    timestamp="$(date -u '+%Y%m%dT%H%M%SZ')"
+    backup_path="$secrets_target.backup.$timestamp"
+    cp -p "$secrets_target" "$backup_path"
+    printf 'Secret helper backup created: %s\n' "$backup_path"
+  fi
+  cp "$secrets_source" "$secrets_target"
+  chmod 700 "$secrets_target"
+  "$secrets_target" doctor
+  printf 'Secret helper installed: %s\n' "$secrets_target"
+}
+
+doctor() {
+  failures=0
+  printf 'Charmfile doctor\n'
+  if command -v codex >/dev/null 2>&1; then
+    printf '  [ok] Codex: %s\n' "$(command -v codex)"
+  else
+    printf '  [fail] Codex command not found\n'
+    failures=$((failures + 1))
+  fi
+
+  if [ -f "$guidance_target" ]; then
+    if managed_markers_are_valid "$guidance_target"; then
+      printf '  [ok] Managed guidance: %s\n' "$guidance_target"
+    else
+      printf '  [fail] Managed guidance markers are invalid: %s\n' "$guidance_target"
+      failures=$((failures + 1))
+    fi
+  else
+    printf '  [fail] Managed guidance is missing: %s\n' "$guidance_target"
+    failures=$((failures + 1))
+  fi
+
+  if command -v git >/dev/null 2>&1; then
+    printf '  [ok] Git available\n'
+  else
+    printf '  [note] Git is unavailable\n'
+  fi
+  if command -v rg >/dev/null 2>&1; then
+    printf '  [ok] ripgrep available\n'
+  else
+    printf '  [note] ripgrep is unavailable\n'
+  fi
+  if [ -x "$secrets_target" ]; then
+    if "$secrets_target" doctor >/dev/null 2>&1; then
+      printf '  [ok] Optional secret helper\n'
+    else
+      printf '  [note] Secret helper exists but its backend is unavailable\n'
+    fi
+  else
+    printf '  [note] Optional secret helper is not installed\n'
+  fi
+  if command -v obsidian-sidecar >/dev/null 2>&1; then
+    printf '  [ok] Optional Obsidian Sidecar available\n'
+  else
+    printf '  [note] Optional Obsidian Sidecar is not installed\n'
+  fi
+
+  if [ "$failures" -gt 0 ]; then
+    printf 'Result: %s required check(s) failed\n' "$failures"
+    return 1
+  fi
+  printf 'Result: healthy\n'
+}
+
+case "$command_name" in
+  plan)
+    show_plan
+    ;;
+  install)
+    [ "$approved" = "true" ] ||
+      die "install requires --yes after the plan is approved"
+    show_plan
+    install_guidance
+    install_secrets
+    doctor
+    ;;
+  doctor)
+    doctor
+    ;;
+  help|-h|--help)
+    usage
+    ;;
+  *)
+    die "unknown command: $command_name"
+    ;;
+esac

@@ -1,0 +1,31 @@
+{
+  "name": "charmfile-frontend",
+  "version": "0.1.0",
+  "description": "Build deliberate, responsive interfaces with accessibility and real browser verification.",
+  "author": {
+    "name": "Charmfile contributors",
+    "url": "https://github.com/WestJohnson/charmfile"
+  },
+  "homepage": "https://github.com/WestJohnson/charmfile",
+  "repository": "https://github.com/WestJohnson/charmfile",
+  "license": "Apache-2.0",
+  "keywords": ["frontend", "responsive", "accessibility", "browser-qa"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Charmfile Frontend",
+    "shortDescription": "Production UI without the generic agent look.",
+    "longDescription": "Guide frontend implementation through a compact art-direction contract, responsive and accessibility gates, real content, focused component architecture, and Chrome verification at desktop and mobile sizes.",
+    "developerName": "Charmfile contributors",
+    "category": "Developer Tools",
+    "capabilities": ["Read", "Write"],
+    "websiteURL": "https://github.com/WestJohnson/charmfile",
+    "privacyPolicyURL": "https://github.com/WestJohnson/charmfile/blob/main/PRIVACY.md",
+    "termsOfServiceURL": "https://github.com/WestJohnson/charmfile/blob/main/LICENSE",
+    "defaultPrompt": [
+      "Build this interface with a strong visual direction.",
+      "Fix the desktop and mobile UI regressions.",
+      "Review this frontend for generic agent patterns."
+    ],
+    "brandColor": "#176548"
+  }
+}

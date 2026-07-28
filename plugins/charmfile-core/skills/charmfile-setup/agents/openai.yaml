@@ -1,0 +1,4 @@
+interface:
+  display_name: "Charmfile Setup"
+  short_description: "Install and check a simple agent configuration"
+  default_prompt: "Use $charmfile-setup to plan or verify my Charmfile setup."

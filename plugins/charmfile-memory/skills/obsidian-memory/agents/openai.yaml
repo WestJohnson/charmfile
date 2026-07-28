@@ -1,0 +1,4 @@
+interface:
+  display_name: "Obsidian Memory"
+  short_description: "Search and maintain durable project memory"
+  default_prompt: "Search the Obsidian knowledge vault for relevant prior work, then use or record only durable, evidence-backed context."

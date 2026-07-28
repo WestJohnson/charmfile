@@ -1,0 +1,7 @@
+interface:
+  display_name: "Analytics Live Analyst"
+  short_description: "GA4, funnel, revenue, and source/medium diagnostics."
+  default_prompt: "Analyze this analytics issue, pull live evidence, and rank the likely causes with next verification steps."
+
+policy:
+  allow_implicit_invocation: true

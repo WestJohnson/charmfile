@@ -1,0 +1,7 @@
+interface:
+  display_name: "DataForSEO API"
+  short_description: "Market, product, ads, and SEO data"
+  default_prompt: "Use $dataforseo-api to research demand, competitors, keyword economics, and SEO opportunities for this market."
+
+policy:
+  allow_implicit_invocation: true

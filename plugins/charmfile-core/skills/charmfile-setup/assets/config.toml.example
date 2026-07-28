@@ -1,0 +1,6 @@
+# Charmfile intentionally does not overwrite ~/.codex/config.toml.
+# These are conservative starting values to review and merge manually.
+
+approval_policy = "on-request"
+sandbox_mode = "workspace-write"
+web_search = "live"

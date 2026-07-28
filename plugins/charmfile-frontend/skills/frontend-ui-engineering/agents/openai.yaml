@@ -1,0 +1,7 @@
+interface:
+  display_name: "Frontend UI Engineering"
+  short_description: "Art-directed, responsive UI implementation and QA."
+  default_prompt: "Use $frontend-ui-engineering to build or improve this interface with a clear direction, production behavior, and desktop/mobile Chrome verification."
+
+policy:
+  allow_implicit_invocation: true

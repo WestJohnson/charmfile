@@ -1,0 +1,7 @@
+interface:
+  display_name: "Ads Live Operator"
+  short_description: "Live ad account audit, Chrome evidence, and approved changes."
+  default_prompt: "Audit this ad account with live evidence, produce ranked actions, and stop before live changes."
+
+policy:
+  allow_implicit_invocation: true

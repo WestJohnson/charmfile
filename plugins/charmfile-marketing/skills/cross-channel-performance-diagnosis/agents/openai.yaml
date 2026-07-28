@@ -1,0 +1,7 @@
+interface:
+  display_name: "Cross-Channel Performance Diagnosis"
+  short_description: "Reconcile Ads, GA4, bookings, revenue, and attribution."
+  default_prompt: "Reconcile the marketing data sources, explain the performance change, and produce a ranked action queue."
+
+policy:
+  allow_implicit_invocation: true

@@ -20,7 +20,8 @@
 - [ ] One representative prompt is tested for every optional pack.
 - [x] Third-party notices include Microsoft Playwright CLI.
 - [x] Account-specific integration content is absent from `plugins/`.
-- [ ] The final archive secret and personal-path scan is clean.
+- [x] The release archive secret, personal-path, and excluded-file scans are
+      clean.
 
 ## Sidecar dependency
 

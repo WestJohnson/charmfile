@@ -68,6 +68,12 @@ plugin_names() {
   fi
 }
 
+prepare_codex_home() {
+  target_codex_home="${CODEX_HOME:-$HOME/.codex}"
+  [ -n "$target_codex_home" ] || die "Codex home resolved to an empty path"
+  mkdir -p "$target_codex_home"
+}
+
 show_plan() {
   root="$1"
   mode="$2"
@@ -96,7 +102,13 @@ install_plugins() {
   while IFS= read -r plugin_name; do
     [ -n "$plugin_name" ] || continue
     printf 'Installing plugin: %s@charmfile\n' "$plugin_name"
-    codex plugin add "$plugin_name@charmfile" --json >/dev/null
+    plugin_json="$(codex plugin add "$plugin_name@charmfile" --json)" ||
+      die "Codex failed to install $plugin_name@charmfile"
+    if ! printf '%s\n' "$plugin_json" |
+      jq -e --arg id "$plugin_name@charmfile" '.pluginId == $id' \
+        >/dev/null; then
+      die "Codex did not confirm installation of $plugin_name@charmfile"
+    fi
   done < <(plugin_names "$root")
 }
 
@@ -213,7 +225,14 @@ case "$command_name" in
       initial_browser="$(browser_script "$repo_root")"
       "$initial_browser" install --yes
     fi
-    codex plugin marketplace add "$marketplace_source" --json >/dev/null
+    prepare_codex_home
+    marketplace_json="$(
+      codex plugin marketplace add "$marketplace_source" --json
+    )" || die "Codex failed to register the charmfile marketplace"
+    if ! printf '%s\n' "$marketplace_json" |
+      jq -e '.marketplaceName == "charmfile"' >/dev/null; then
+      die "Codex did not confirm the charmfile marketplace registration"
+    fi
     installed_root="$(marketplace_root)"
     [ -n "$installed_root" ] ||
       die "Codex did not register the charmfile marketplace"

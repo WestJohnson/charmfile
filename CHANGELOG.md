@@ -13,6 +13,9 @@
 - Added a bounded `.zprofile` block so the installed launchers work without
   manual PATH repair.
 - Added updateable lifecycle launchers and Git-marketplace refresh behavior.
+- Made first-run installation create a missing Codex home and verify Codex
+  marketplace and plugin confirmations instead of accepting false-success CLI
+  output.
 - Preserved compatible existing Playwright and secret helpers.
 - Added an LLM-oriented Sidecar cloud-sync guide, explicit local/sync/cloud
   mode boundaries, verification contracts, and copy-paste installation prompts.

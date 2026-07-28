@@ -16,7 +16,6 @@ test_home="$test_root/home"
 chrome_root="$test_home/Library/Application Support/Google/Chrome"
 chrome_app="$test_root/Google Chrome.app"
 mkdir -p \
-  "$test_home/.codex" \
   "$test_home/.local/bin" \
   "$chrome_root/Default/Extensions/$extension_id" \
   "$chrome_app"
@@ -59,6 +58,7 @@ fi
 
 "$lifecycle" install --yes > "$test_root/install.txt"
 grep -Fq 'Full result: healthy' "$test_root/install.txt"
+test -d "$test_home/.codex"
 test -f "$test_home/.codex/AGENTS.md"
 test -f "$test_home/.codex/charmfile.config.toml"
 test -f "$test_home/.zprofile"

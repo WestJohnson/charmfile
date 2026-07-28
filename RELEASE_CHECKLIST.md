@@ -1,4 +1,4 @@
-# Charmfile 0.1.0 Release Checklist
+# Charmfile 0.1.0-rc.1 Release Checklist
 
 ## Complete locally
 

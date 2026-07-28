@@ -133,7 +133,7 @@ installer's create/update/backup behavior.
 
 ## Project status
 
-`0.1.0` release candidate. The repository is prepared for local marketplace
+`0.1.0-rc.1` release candidate. The repository is prepared for local marketplace
 testing but has not been published or submitted to the universal plugin
 directory.
 

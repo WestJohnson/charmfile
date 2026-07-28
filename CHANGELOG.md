@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.0 - Unreleased
+## 0.1.0-rc.1 - Unreleased
 
 - Introduced the Charmfile name and plugin marketplace.
 - Added a plan-first core installer and setup doctor.

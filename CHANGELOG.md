@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.0-rc.2 - Unreleased
+## 0.1.0-rc.3 - 2026-07-27
 
 - Made the public package and lifecycle explicitly macOS-only.
 - Added a source-visible agentic installer with plan, install, update, and

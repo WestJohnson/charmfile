@@ -28,7 +28,7 @@ without inventing a private host layout.
 
 ## Release Gate
 
-The Charmfile `0.1.0-rc.2` source includes the memory skills, but public runtime
+The Charmfile `0.1.0-rc.3` source includes the memory skills, but public runtime
 installation remains gated on a published, checksum-verified Sidecar `0.6.0`
 release. An installer must:
 

@@ -35,7 +35,7 @@ for plugin_name in "${plugins[@]}"; do
     > "$test_codex_root/$plugin_name.json"
   grep -Fq "\"pluginId\": \"$plugin_name@charmfile\"" \
     "$test_codex_root/$plugin_name.json"
-  grep -Fq '"version": "0.1.0-rc.2"' "$test_codex_root/$plugin_name.json"
+  grep -Fq '"version": "0.1.0-rc.3"' "$test_codex_root/$plugin_name.json"
 done
 
 CODEX_HOME="$test_codex_root" codex plugin list \

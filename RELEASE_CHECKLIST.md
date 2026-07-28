@@ -1,4 +1,4 @@
-# Charmfile 0.1.0-rc.2 Release Checklist
+# Charmfile 0.1.0-rc.3 Release Checklist
 
 ## Complete locally
 
@@ -28,13 +28,14 @@
 
 ## Sidecar dependency
 
-- [ ] Review and push local Sidecar commits `db85495` and `ef6f710`.
-- [x] Run the Sidecar deterministic suite: 152 tests passed on 2026-07-27.
+- [x] Review and push the Sidecar release commits through `8ede4ed`.
+- [x] Run the Sidecar deterministic suite: 152 tests passed on 2026-07-27,
+      followed by a green macOS/Linux Python 3.11/3.13 CI matrix.
 - [x] Verify the current `0.6.0` artifact checksums and clean-install smoke
       test.
 - [ ] Rebuild from the reviewed release commit, then run upgrade, rollback,
       artifact secret-scan, and live benchmark gates.
-- [ ] Create and push a signed `0.6.0` tag.
+- [ ] Push the locally verified signed `v0.6.0` tag.
 - [ ] Publish the `0.6.0` wheel, source archive, agent bundle, and checksums.
 - [ ] Verify installation without using a local filesystem path.
 

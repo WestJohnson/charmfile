@@ -183,7 +183,7 @@ eight-pack installation, update behavior, and managed-file backups.
 
 ## Project status
 
-`0.1.0-rc.2` release candidate. The repository is prepared for local
+`0.1.0-rc.3` release candidate. The repository is prepared for local
 marketplace testing but has not been published or submitted to the universal
 plugin directory.
 

@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 PLUGINS = ROOT / "plugins"
 MARKETPLACE = ROOT / ".agents" / "plugins" / "marketplace.json"
 INSTALL_SKILL = ROOT / ".agents" / "skills" / "install-charmfile"
-RELEASE_VERSION = "0.1.0-rc.2"
+RELEASE_VERSION = "0.1.0-rc.3"
 
 EXPECTED_PLUGINS = {
     "charmfile-browser",

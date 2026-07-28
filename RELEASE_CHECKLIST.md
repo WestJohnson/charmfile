@@ -38,21 +38,28 @@
       artifact secret-scan, and live benchmark gates. The isolated
       `0.5.1 -> 0.6.0 -> 0.5.1 -> 0.6.0` cycle passed; local benchmarks scored
       100 twice and the cloud benchmark scored 90 with no failed critical gate.
-- [ ] Push the locally verified signed `v0.6.0` tag.
-- [ ] Publish the `0.6.0` wheel, source archive, agent bundle, and checksums.
-- [ ] Verify installation without using a local filesystem path.
+- [ ] Push the locally verified signed `v0.6.0` tag to the self-hosted Git
+      repository and GitHub mirror.
+- [ ] Publish the `0.6.0` wheel, source archive, agent bundle, checksums, and
+      update index through the self-hosted HTTPS channel.
+- [ ] Verify installation, update, and rollback without PyPI or a local source
+      checkout.
 
-## Public repository
+## Self-hosted publication
 
-- [x] Re-check the Charmfile name across GitHub, npm, and PyPI on 2026-07-27.
-- [x] Create `https://github.com/WestJohnson/charmfile`.
-- [x] Push the reviewed release commit.
-- [x] Confirm README, privacy, terms, support, and security URLs resolve.
+- [ ] Publish HTTPS-clonable bare repositories for Charmfile and Sidecar.
+- [x] Create the public GitHub mirrors.
+- [ ] Push the reviewed release commits and signed tags to both remotes.
+- [ ] Confirm self-hosted README, privacy, terms, support, and security URLs
+      resolve.
 - [x] Enable private vulnerability reporting.
-- [ ] Publish the release archive and `SHA256SUMS`.
-- [x] Verify agentic installation from the public Git source in a clean,
+- [ ] Publish the self-hosted release archive and `SHA256SUMS`.
+- [x] Verify agentic installation from the GitHub mirror in a clean, isolated
+      Codex home on macOS.
+- [ ] Verify agentic installation from the self-hosted Git source in a clean,
       isolated Codex home on macOS.
-- [x] Verify the Git-backed Charmfile marketplace upgrade path.
+- [ ] Verify the Git-backed Charmfile marketplace upgrade path against the
+      self-hosted canonical remote.
 
 ## Plugin submission
 

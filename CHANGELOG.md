@@ -2,6 +2,9 @@
 
 ## 0.1.0-rc.3 - 2026-07-27
 
+- Made the West Hawaii HTTPS release channel canonical for Git, checksummed
+  archives, policy documents, Sidecar wheels, update metadata, and rollback;
+  GitHub remains a public mirror.
 - Made the public package and lifecycle explicitly macOS-only.
 - Added a source-visible agentic installer with plan, install, update, and
   full-doctor workflows.

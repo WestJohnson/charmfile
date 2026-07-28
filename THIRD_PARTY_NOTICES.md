@@ -87,7 +87,7 @@ SOFTWARE.
 
 ## Codex Obsidian Sidecar
 
-Source: <https://github.com/WestJohnson/codex-obsidian-sidecar>
+Source: <https://ai.westhawaiimarketing.com/charmfile/git/codex-obsidian-sidecar.git>
 
 Charmfile bundles the Sidecar setup skill, not the Sidecar runtime. The setup
 skill is distributed under the Sidecar's MIT license.

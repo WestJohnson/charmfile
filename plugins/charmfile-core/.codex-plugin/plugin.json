@@ -4,10 +4,10 @@
   "description": "Install a small, safe Codex operating configuration and lightweight workflow rules.",
   "author": {
     "name": "Charmfile contributors",
-    "url": "https://github.com/WestJohnson/charmfile"
+    "url": "https://ai.westhawaiimarketing.com/charmfile/"
   },
-  "homepage": "https://github.com/WestJohnson/charmfile",
-  "repository": "https://github.com/WestJohnson/charmfile",
+  "homepage": "https://ai.westhawaiimarketing.com/charmfile/",
+  "repository": "https://ai.westhawaiimarketing.com/charmfile/git/charmfile.git",
   "license": "Apache-2.0",
   "keywords": ["agents", "codex", "configuration", "workflow"],
   "skills": "./skills/",
@@ -18,9 +18,9 @@
     "developerName": "Charmfile contributors",
     "category": "Productivity",
     "capabilities": ["Read", "Write"],
-    "websiteURL": "https://github.com/WestJohnson/charmfile",
-    "privacyPolicyURL": "https://github.com/WestJohnson/charmfile/blob/main/PRIVACY.md",
-    "termsOfServiceURL": "https://github.com/WestJohnson/charmfile/blob/main/LICENSE",
+    "websiteURL": "https://ai.westhawaiimarketing.com/charmfile/",
+    "privacyPolicyURL": "https://ai.westhawaiimarketing.com/charmfile/docs/PRIVACY.md",
+    "termsOfServiceURL": "https://ai.westhawaiimarketing.com/charmfile/docs/LICENSE.txt",
     "defaultPrompt": [
       "Set up my Charmfile configuration.",
       "Health-check my Charmfile setup.",

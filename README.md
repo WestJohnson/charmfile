@@ -50,6 +50,13 @@ Requirements:
 - Homebrew if Node.js 18+, jq, or Google Chrome is missing;
 - the official Playwright Extension for signed-in Chrome work.
 
+Clone the canonical self-hosted Git repository:
+
+```sh
+git clone https://ai.westhawaiimarketing.com/charmfile/git/charmfile.git
+cd charmfile
+```
+
 Give Codex this reviewed checkout and say:
 
 ```text
@@ -131,7 +138,7 @@ new Codex session after every update.
 ## Durable memory
 
 `charmfile-memory` guides installation and operation of
-[Codex Obsidian Sidecar](https://github.com/WestJohnson/codex-obsidian-sidecar).
+[Codex Obsidian Sidecar](https://ai.westhawaiimarketing.com/charmfile/git/codex-obsidian-sidecar.git).
 The Sidecar:
 
 - curates sanitized, evidence-backed outcomes into normal Markdown;
@@ -145,8 +152,9 @@ Raw transcripts, internal reasoning, complete tool output, and credentials do
 not belong in the vault. Vault selection and Sidecar activation remain a
 separate plan-and-approval phase.
 
-Public memory installation remains gated on publishing the Sidecar `0.6.0`
-release; see [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md).
+The exact Sidecar `0.6.0` wheel, checksums, rollback wheel, and update metadata
+are published through the self-hosted Charmfile release channel; see
+[RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md).
 
 Cloud operation is a second, opt-in phase. Charmfile never silently installs
 Syncthing, chooses a server, opens a port, or enables a paid model. The tested
@@ -183,9 +191,10 @@ eight-pack installation, update behavior, and managed-file backups.
 
 ## Project status
 
-`0.1.0-rc.3` release candidate. The repository is prepared for local
-marketplace testing but has not been published or submitted to the universal
-plugin directory.
+`0.1.0-rc.3` release candidate. The canonical Git repository, checksummed
+archives, policy documents, and Sidecar update channel are self-hosted at
+`ai.westhawaiimarketing.com`. GitHub remains a public mirror. Charmfile has not
+been submitted to the universal plugin directory.
 
 See:
 

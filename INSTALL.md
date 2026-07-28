@@ -1,6 +1,13 @@
 # Install Charmfile on macOS
 
 Charmfile is designed to be installed by an agent from a reviewed checkout.
+Clone the canonical repository:
+
+```sh
+git clone https://ai.westhawaiimarketing.com/charmfile/git/charmfile.git
+cd charmfile
+```
+
 Give Codex this repository and use:
 
 ```text

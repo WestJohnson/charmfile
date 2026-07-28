@@ -28,9 +28,9 @@ without inventing a private host layout.
 
 ## Release Gate
 
-The Charmfile `0.1.0-rc.3` source includes the memory skills, but public runtime
-installation remains gated on a published, checksum-verified Sidecar `0.6.0`
-release. An installer must:
+The Charmfile `0.1.0-rc.3` source includes the memory skills. Runtime
+installation resolves the published, checksum-verified Sidecar `0.6.0` release
+from the self-hosted Charmfile HTTPS channel. An installer must:
 
 1. Resolve an exact Sidecar version and reviewed release artifact.
 2. Verify its checksum before installation.

@@ -42,6 +42,8 @@ REQUIRED_FILES = {
     "CHANGELOG.md",
     "THIRD_PARTY_NOTICES.md",
     "RELEASE_CHECKLIST.md",
+    "docs/SIDECAR_CLOUD_SYNC.md",
+    "plugins/charmfile-memory/skills/obsidian-sidecar-setup/references/cloud-sync-contract.md",
 }
 
 SEMVER = re.compile(

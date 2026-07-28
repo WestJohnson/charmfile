@@ -28,6 +28,9 @@ advisory flow.
 - Secret values stay in the operating system's secret store.
 - The Playwright Extension remains a user-approved Chrome installation.
 - Live Chrome attachment does not authorize a live-account mutation.
+- Sidecar cloud replication is disabled by default and requires a separate
+  reviewed plan for the server, Syncthing peers, network exposure, secrets,
+  backups, health gates, and rollback.
 - Public validation rejects personal absolute paths, credential-shaped
   strings, scaffold placeholders, and excluded integration content.
 

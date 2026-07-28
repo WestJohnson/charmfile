@@ -28,6 +28,11 @@ it.
 - Specialist packs do not require memory.
 - The memory pack guides installation of the separately versioned Obsidian
   Sidecar rather than hiding it inside Core.
+- Local memory, vault replication, and overnight cloud maintenance are three
+  separate approval boundaries. Charmfile configures none of them silently.
+- The supported headless cloud pattern uses a normal Syncthing Markdown
+  replica with fenced writers; Obsidian Sync and iCloud remain user-managed
+  personal-device choices, not Charmfile cloud-worker transports.
 - The Browser pack owns Playwright installation and keeps isolated automation
   separate from explicit signed-in Chrome attachment.
 - The marketplace bundles no MCP runtime and requests no authentication. The

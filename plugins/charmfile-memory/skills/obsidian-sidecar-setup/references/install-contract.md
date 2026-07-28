@@ -10,6 +10,11 @@
 No API key is an installation input. Cloud replication is a separate operator
 workflow and is disabled by default.
 
+For an explicitly requested cloud phase, finish this local contract first,
+then read [cloud-sync-contract.md](cloud-sync-contract.md). Sync-only mode does
+not require a model credential. Overnight model analysis is optional and must
+keep its credential outside the vault, repository, plan, and logs.
+
 ## Install A Release
 
 From PyPI after public release:
@@ -96,7 +101,8 @@ freshness and a representative read-only decision impact before completion.
 
 Charmfile supports this setup workflow on macOS with launchd. The upstream
 Sidecar may expose other platform integrations, but they are outside this
-package's tested support boundary.
+package's default local support boundary. The optional cloud contract covers a
+separately administered Linux replica only when the user requests it.
 
 ## Updates
 

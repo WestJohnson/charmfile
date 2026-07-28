@@ -1,6 +1,6 @@
 ---
 name: obsidian-sidecar-setup
-description: Install, configure, update, repair, migrate, or verify Codex Obsidian Sidecar on macOS. Use when an agent is asked to set up the sidecar from a release, connect an Obsidian vault, register Codex hooks or Basic Memory, install its launchd worker, diagnose an installation, or apply a sidecar update.
+description: Install, configure, update, repair, migrate, or verify Codex Obsidian Sidecar on macOS, and scope its optional cloud replica. Use when an agent is asked to set up the sidecar from a release, connect an Obsidian vault, register Codex hooks or Basic Memory, install its launchd worker, diagnose an installation, apply a sidecar update, or plan explicitly requested cloud sync.
 ---
 
 # Obsidian Sidecar Setup
@@ -26,7 +26,24 @@ files, or config when `obsidian-sidecar setup` can do so.
 8. Run `obsidian-sidecar verify-install`, then `obsidian-sidecar doctor`.
 9. In a fresh Codex session, have the user review and trust the Stop hook.
 10. Run `obsidian-sidecar benchmark` only after hook trust and live dependencies
-   are available. Require at least 80 and every critical gate.
+    are available. Require at least 80 and every critical gate.
+
+## Optional Cloud Sync
+
+Cloud work is a separate phase and starts only when the user explicitly asks
+for it. Read
+[references/cloud-sync-contract.md](references/cloud-sync-contract.md), identify
+whether the user wants sync only or overnight maintenance, and finish the local
+workflow before planning cloud changes.
+
+Perform read-only discovery on the Mac and reviewed Linux host. Show the
+complete Syncthing, network, service, secret-storage, backup, verification, and
+rollback plan, then wait for approval. Use the exact Sidecar release's cloud
+documentation and systemd templates; do not copy a private host layout or
+invent a different replication system.
+
+Cloud completion requires healthy, complete, conflict-free replication plus
+local and cloud benchmark scores of at least 80 with every critical gate.
 
 ## Safety Rules
 
@@ -35,7 +52,8 @@ files, or config when `obsidian-sidecar setup` can do so.
 - Preserve unrelated Codex hooks and Basic Memory projects.
 - Keep config and service files user-only and retain generated backups.
 - Do not enable cloud replication, Syncthing, SSH, or public ports as part of
-  the default installation.
+  the default installation. An explicitly requested cloud phase still requires
+  a separate plan and approval.
 - Do not claim completion while a required verification check is failing.
 - Do not bypass Codex hook trust.
 - Keep automatic update mutation disabled. Update checks may be enabled, but an

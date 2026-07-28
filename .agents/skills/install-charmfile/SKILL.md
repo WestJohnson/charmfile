@@ -23,6 +23,10 @@ profile, macOS Keychain secret injection, and the Playwright browser setup.
    separately.
 8. Open a new terminal and start a new Codex session so the managed PATH and
    newly installed or updated plugins are loaded.
+9. If the user requests durable memory, start
+   `$obsidian-sidecar-setup` as a separate local plan. Cloud sync or overnight
+   maintenance is a third, explicitly requested phase governed by that skill's
+   cloud-sync contract.
 
 For an existing installation:
 
@@ -50,3 +54,6 @@ charmfile doctor
   works.
 - Do not automatically configure an Obsidian vault. Use
   `$obsidian-sidecar-setup` as a second plan-and-approval phase when requested.
+- Do not install Syncthing, choose a cloud host, open a port, or enable a model
+  during the Charmfile install. Cloud operation requires a separate discovery
+  plan and approval after local Sidecar verification passes.

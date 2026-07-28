@@ -14,6 +14,8 @@
   manual PATH repair.
 - Added updateable lifecycle launchers and Git-marketplace refresh behavior.
 - Preserved compatible existing Playwright and secret helpers.
+- Added an LLM-oriented Sidecar cloud-sync guide, explicit local/sync/cloud
+  mode boundaries, verification contracts, and copy-paste installation prompts.
 - Expanded isolated tests for the eight-pack marketplace, browser modes,
   profile safety, full installation, and local updates.
 

@@ -48,6 +48,13 @@ configuration and documentation. It is designed to exclude raw transcripts,
 internal reasoning, complete tool output, credentials, and private account
 identifiers from durable notes.
 
+Optional cloud sync creates another plaintext Markdown replica administered by
+the user. Charmfile does not enable it automatically. Sync-only mode needs no
+model credential. If the user enables overnight model analysis, the cloud
+worker sends bounded note excerpts to the selected provider and keeps its
+credential outside the vault, Git, generated reports, and Sidecar
+configuration. See [Sidecar Cloud Sync](docs/SIDECAR_CLOUD_SYNC.md).
+
 ## External tools
 
 Specialist skills may instruct an agent to use services selected and

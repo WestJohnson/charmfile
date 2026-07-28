@@ -22,6 +22,9 @@
 - [x] Account-specific integration content is absent from `plugins/`.
 - [x] The release archive secret, personal-path, and excluded-file scans are
       clean.
+- [x] Sidecar documentation separates local memory, sync-only, and overnight
+      cloud maintenance and gives agents explicit plan, approval, verification,
+      privacy, and rollback contracts.
 
 ## Sidecar dependency
 

@@ -148,6 +148,13 @@ separate plan-and-approval phase.
 Public memory installation remains gated on publishing the Sidecar `0.6.0`
 release; see [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md).
 
+Cloud operation is a second, opt-in phase. Charmfile never silently installs
+Syncthing, chooses a server, opens a port, or enables a paid model. The tested
+headless-worker topology uses a Syncthing filesystem replica, fenced writer
+leases, derived reports, versioned backups, and separate local/cloud health
+gates. See [Sidecar Cloud Sync](docs/SIDECAR_CLOUD_SYNC.md) for the user and
+LLM installation prompts.
+
 ## Secret handling
 
 The optional `codex-secrets` helper uses macOS Keychain:

@@ -17,7 +17,8 @@
 - [x] `./scripts/validate-release.sh` passes for the reviewed release source.
 - [x] Every plugin passes the current official plugin validator.
 - [x] Every skill passes the current official skill validator.
-- [ ] One representative prompt is tested for every optional pack.
+- [x] One representative prompt is tested for every pack with isolated,
+      read-only routing probes on 2026-07-27.
 - [x] Third-party notices include Microsoft Playwright CLI.
 - [x] Account-specific integration content is absent from `plugins/`.
 - [x] The release archive secret, personal-path, and excluded-file scans are
@@ -33,8 +34,10 @@
       followed by a green macOS/Linux Python 3.11/3.13 CI matrix.
 - [x] Verify the current `0.6.0` artifact checksums and clean-install smoke
       test.
-- [ ] Rebuild from the reviewed release commit, then run upgrade, rollback,
-      artifact secret-scan, and live benchmark gates.
+- [x] Rebuild from the reviewed release commit, then run upgrade, rollback,
+      artifact secret-scan, and live benchmark gates. The isolated
+      `0.5.1 -> 0.6.0 -> 0.5.1 -> 0.6.0` cycle passed; local benchmarks scored
+      100 twice and the cloud benchmark scored 90 with no failed critical gate.
 - [ ] Push the locally verified signed `v0.6.0` tag.
 - [ ] Publish the `0.6.0` wheel, source archive, agent bundle, and checksums.
 - [ ] Verify installation without using a local filesystem path.
@@ -42,13 +45,14 @@
 ## Public repository
 
 - [x] Re-check the Charmfile name across GitHub, npm, and PyPI on 2026-07-27.
-- [ ] Create `https://github.com/WestJohnson/charmfile`.
-- [ ] Push the reviewed release commit.
-- [ ] Confirm README, privacy, terms, support, and security URLs resolve.
-- [ ] Enable private vulnerability reporting.
+- [x] Create `https://github.com/WestJohnson/charmfile`.
+- [x] Push the reviewed release commit.
+- [x] Confirm README, privacy, terms, support, and security URLs resolve.
+- [x] Enable private vulnerability reporting.
 - [ ] Publish the release archive and `SHA256SUMS`.
-- [ ] Verify agentic installation from the public Git source on a clean Mac.
-- [ ] Verify `charmfile update --yes` against the public Git marketplace.
+- [x] Verify agentic installation from the public Git source in a clean,
+      isolated Codex home on macOS.
+- [x] Verify the Git-backed Charmfile marketplace upgrade path.
 
 ## Plugin submission
 

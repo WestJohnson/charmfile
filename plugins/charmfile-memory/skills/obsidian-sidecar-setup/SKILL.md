@@ -1,6 +1,6 @@
 ---
 name: obsidian-sidecar-setup
-description: Install, configure, update, repair, migrate, or verify Codex Obsidian Sidecar on a user's machine. Use when an agent is asked to set up the sidecar from a release, connect an Obsidian vault, register Codex hooks or Basic Memory, install a background worker, diagnose an installation, or apply a sidecar update across differing macOS or Linux environments.
+description: Install, configure, update, repair, migrate, or verify Codex Obsidian Sidecar on macOS. Use when an agent is asked to set up the sidecar from a release, connect an Obsidian vault, register Codex hooks or Basic Memory, install its launchd worker, diagnose an installation, or apply a sidecar update.
 ---
 
 # Obsidian Sidecar Setup
@@ -13,17 +13,19 @@ files, or config when `obsidian-sidecar setup` can do so.
 
 1. Inspect the release files and read
    [references/install-contract.md](references/install-contract.md).
-2. Install the exact wheel or package version with `uv tool install`.
+2. Confirm the host is macOS. Charmfile does not support this workflow on
+   another operating system.
+3. Install the exact wheel or package version with `uv tool install`.
    Never execute a network-fetched shell script.
-3. Run `obsidian-sidecar preflight` and parse the JSON.
-4. Resolve only missing decisions: vault path, Codex binary, model, and which
+4. Run `obsidian-sidecar preflight` and parse the JSON.
+5. Resolve only missing decisions: vault path, Codex binary, model, and which
    optional integrations the user wants.
-5. Run `obsidian-sidecar setup` without `--apply`. Treat the JSON plan as the
+6. Run `obsidian-sidecar setup` without `--apply`. Treat the JSON plan as the
    proposed mutation set and show it to the user.
-6. Obtain explicit approval before adding `--apply`.
-7. Run `obsidian-sidecar verify-install`, then `obsidian-sidecar doctor`.
-8. In a fresh Codex session, have the user review and trust the Stop hook.
-9. Run `obsidian-sidecar benchmark` only after hook trust and live dependencies
+7. Obtain explicit approval before adding `--apply`.
+8. Run `obsidian-sidecar verify-install`, then `obsidian-sidecar doctor`.
+9. In a fresh Codex session, have the user review and trust the Stop hook.
+10. Run `obsidian-sidecar benchmark` only after hook trust and live dependencies
    are available. Require at least 80 and every critical gate.
 
 ## Safety Rules

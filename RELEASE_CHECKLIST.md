@@ -1,20 +1,26 @@
-# Charmfile 0.1.0-rc.1 Release Checklist
+# Charmfile 0.1.0-rc.2 Release Checklist
 
 ## Complete locally
 
-- [x] `./scripts/validate-release.sh` passes from a clean checkout.
+- [x] Every plugin and skill passes the repository structure validator.
+- [x] All eight plugins install from the marketplace in an isolated Codex
+      home.
+- [x] Core install, append, update, backup, guidance and shell marker
+      rejection, profile, and Codex profile-load tests pass.
+- [x] Browser tests cover owned installation, compatible external CLI
+      preservation, isolated readiness, extension readiness, and non-macOS
+      rejection.
+- [x] The full lifecycle test covers plan, approval, eight-pack installation,
+      profile launch, doctor, and local update.
+- [x] The macOS Keychain helper passes injection, registry, deletion,
+      validation, platform rejection, and native doctor tests.
+- [x] `./scripts/validate-release.sh` passes for the reviewed release source.
 - [x] Every plugin passes the current official plugin validator.
-- [x] Every skill passes the current skill validator.
-- [x] All seven plugins install from the repository marketplace in an isolated
-      Codex home.
-- [x] The archive secret and personal-path scan is clean.
-- [x] Core install, append, update, backup, restoration guidance, and doctor
-      tests pass.
-- [x] Optional secret helper passes simulated macOS and Linux backend tests plus
-      a native macOS doctor check.
+- [x] Every skill passes the current official skill validator.
 - [ ] One representative prompt is tested for every optional pack.
-- [x] Third-party notices and licenses are reviewed.
-- [x] Wix-specific content is absent from `plugins/`.
+- [x] Third-party notices include Microsoft Playwright CLI.
+- [x] Account-specific integration content is absent from `plugins/`.
+- [ ] The final archive secret and personal-path scan is clean.
 
 ## Sidecar dependency
 
@@ -36,7 +42,8 @@
 - [ ] Confirm README, privacy, terms, support, and security URLs resolve.
 - [ ] Enable private vulnerability reporting.
 - [ ] Publish the release archive and `SHA256SUMS`.
-- [ ] Verify installation from the public Git source in a clean environment.
+- [ ] Verify agentic installation from the public Git source on a clean Mac.
+- [ ] Verify `charmfile update --yes` against the public Git marketplace.
 
 ## Plugin submission
 

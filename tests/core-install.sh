@@ -57,6 +57,65 @@ test "$(find "$test_home/.codex" -maxdepth 1 -name 'AGENTS.md.backup.*' | wc -l 
 "$charmfile" doctor --scope user > "$test_root/doctor.txt"
 grep -Fq 'Result: healthy' "$test_root/doctor.txt"
 
+printf '%s\n' \
+  '# User-owned base config' \
+  'model = "user-owned-model"' > "$test_home/.codex/config.toml"
+printf '# User-owned shell setup\n' > "$test_home/.zprofile"
+cp "$test_home/.codex/config.toml" "$test_root/config-before.toml"
+"$charmfile" plan \
+  --scope user \
+  --with-path \
+  --with-profile > "$test_root/profile-plan.txt"
+grep -Fq 'portable profile: create' "$test_root/profile-plan.txt"
+grep -Fq 'shell PATH block: append' "$test_root/profile-plan.txt"
+"$charmfile" install \
+  --scope user \
+  --with-path \
+  --with-profile \
+  --yes > "$test_root/profile-install.txt"
+cmp -s "$test_root/config-before.toml" "$test_home/.codex/config.toml"
+grep -Fq '# User-owned shell setup' "$test_home/.zprofile"
+grep -Fq '# CHARMFILE:PATH:START' "$test_home/.zprofile"
+test "$(
+  find "$test_home" -maxdepth 1 -name '.zprofile.backup.*' |
+    wc -l |
+    tr -d ' '
+)" -ge 1
+profile="$test_home/.codex/charmfile.config.toml"
+test -f "$profile"
+grep -Fq 'approval_policy = "on-request"' "$profile"
+grep -Fq 'sandbox_mode = "workspace-write"' "$profile"
+grep -Fq '[mcp_servers.openaiDeveloperDocs]' "$profile"
+if grep -Eq 'danger-full-access|approval_policy = "never"|model = ' "$profile"; then
+  printf 'portable profile contains a non-portable or unsafe value\n' >&2
+  exit 1
+fi
+test -x "$test_home/.local/bin/charmfile"
+test -x "$test_home/.local/bin/charmfile-codex"
+"$charmfile" doctor \
+  --scope user \
+  --with-path \
+  --with-profile > "$test_root/profile-doctor.txt"
+grep -Fq 'Portable profile loads in Codex' \
+  "$test_root/profile-doctor.txt"
+
+cp "$test_home/.zprofile" "$test_root/zprofile-valid"
+printf '%s\n' \
+  '# User-owned shell setup' \
+  '# CHARMFILE:PATH:END' \
+  '# CHARMFILE:PATH:START' > "$test_home/.zprofile"
+cp "$test_home/.zprofile" "$test_root/zprofile-inverted"
+if "$charmfile" plan \
+  --scope user \
+  --with-path > "$test_root/path-inverted-plan.txt" 2>&1; then
+  printf 'plan unexpectedly accepted inverted PATH markers\n' >&2
+  exit 1
+fi
+grep -Fq 'shell PATH block: blocked-invalid-markers' \
+  "$test_root/path-inverted-plan.txt"
+cmp -s "$test_root/zprofile-inverted" "$test_home/.zprofile"
+cp "$test_root/zprofile-valid" "$test_home/.zprofile"
+
 printf '# Existing repository guidance\n' > "$test_repo/AGENTS.md"
 "$charmfile" install --scope repo --repo "$test_repo" --yes > "$test_root/repo-install.txt"
 grep -Fq '# Existing repository guidance' "$test_repo/AGENTS.md"
@@ -96,4 +155,4 @@ if "$charmfile" install --scope repo --repo "$test_duplicate_repo" --yes > "$tes
   exit 1
 fi
 
-printf '[ok] core install, approval, scoped headings, safe updates, backups, marker rejection, preservation, and doctor\n'
+printf '[ok] core install, portable profile, approval, safe updates, backups, marker rejection, preservation, and doctor\n'

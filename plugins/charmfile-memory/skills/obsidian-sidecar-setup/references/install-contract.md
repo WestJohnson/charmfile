@@ -35,8 +35,7 @@ obsidian-sidecar preflight
 
 Required successful evidence:
 
-- supported macOS or Linux service manager, or an explicitly accepted manual
-  worker plan;
+- supported macOS launchd service manager;
 - a real vault candidate selected by the user;
 - an executable Codex CLI;
 - sidecar on `PATH`;
@@ -70,7 +69,7 @@ After user approval, rerun the exact plan with `--apply`. The installer:
 - merges one bounded Stop hook without replacing unrelated hooks;
 - registers Basic Memory only when the project name is free or already points
   to the same vault;
-- creates a launchd agent on macOS or user-level systemd timer on Linux;
+- creates a launchd agent on macOS;
 - creates timestamped backups before replacing existing files;
 - restores touched files if setup fails.
 
@@ -95,10 +94,9 @@ freshness and a representative read-only decision impact before completion.
 
 ## Platform Boundary
 
-- macOS: launchd integration is supported.
-- Linux: user-level systemd integration is supported when a user bus exists.
-- Windows: install the package only and use a manually reviewed scheduler; the
-  setup command rejects automatic service installation.
+Charmfile supports this setup workflow on macOS with launchd. The upstream
+Sidecar may expose other platform integrations, but they are outside this
+package's tested support boundary.
 
 ## Updates
 

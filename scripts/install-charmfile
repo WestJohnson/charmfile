@@ -1,0 +1,259 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+repo_root="$(cd "$script_dir/.." && pwd)"
+
+die() {
+  printf 'install-charmfile: %s\n' "$*" >&2
+  exit 1
+}
+
+usage() {
+  printf '%s\n' \
+    "Usage:" \
+    "  install-charmfile plan [--source PATH_OR_GIT]" \
+    "  install-charmfile install [--source PATH_OR_GIT] --yes" \
+    "  install-charmfile update --yes" \
+    "  install-charmfile doctor [--require-live-chrome]" \
+    "" \
+    "The default source is the repository containing this command."
+}
+
+require_macos() {
+  [ "$(uname -s)" = "Darwin" ] ||
+    die "this Charmfile release supports macOS only"
+}
+
+require_command() {
+  command -v "$1" >/dev/null 2>&1 ||
+    die "required command is unavailable: $1"
+}
+
+core_script() {
+  printf '%s/plugins/charmfile-core/skills/charmfile-setup/scripts/charmfile\n' "$1"
+}
+
+browser_script() {
+  printf '%s/plugins/charmfile-browser/skills/browser-setup/scripts/charmfile-browser\n' "$1"
+}
+
+marketplace_root() {
+  require_command jq
+  codex plugin marketplace list --json |
+    jq -r '.marketplaces[] | select(.name == "charmfile") | .root' |
+    sed -n '1p'
+}
+
+marketplace_source_type() {
+  require_command jq
+  codex plugin marketplace list --json |
+    jq -r '
+      .marketplaces[]
+      | select(.name == "charmfile")
+      | .marketplaceSource.sourceType
+    ' |
+    sed -n '1p'
+}
+
+plugin_names() {
+  root="$1"
+  manifest="$root/.agents/plugins/marketplace.json"
+  [ -f "$manifest" ] || die "marketplace manifest is missing: $manifest"
+  if command -v jq >/dev/null 2>&1; then
+    jq -r '.plugins[].name' "$manifest"
+  else
+    find "$root/plugins" -mindepth 1 -maxdepth 1 -type d -exec basename {} \; |
+      sort
+  fi
+}
+
+show_plan() {
+  root="$1"
+  mode="$2"
+  core="$(core_script "$root")"
+  browser="$(browser_script "$root")"
+  [ -x "$core" ] || die "Core setup command is missing: $core"
+  [ -x "$browser" ] || die "Browser setup command is missing: $browser"
+
+  printf 'Charmfile full-install plan\n'
+  printf '  operation: %s\n' "$mode"
+  printf '  platform: macOS only\n'
+  printf '  marketplace source: %s\n' "$marketplace_source"
+  printf '  plugin packs:\n'
+  while IFS= read -r plugin_name; do
+    [ -n "$plugin_name" ] || continue
+    printf '    - %s\n' "$plugin_name"
+  done < <(plugin_names "$root")
+  printf '  plugin behavior: install or refresh; unrelated plugins unchanged\n'
+  printf '  new terminal and Codex session required after apply\n'
+  "$core" plan --scope user --with-path --with-profile --with-secrets
+  "$browser" plan
+}
+
+install_plugins() {
+  root="$1"
+  while IFS= read -r plugin_name; do
+    [ -n "$plugin_name" ] || continue
+    printf 'Installing plugin: %s@charmfile\n' "$plugin_name"
+    codex plugin add "$plugin_name@charmfile" --json >/dev/null
+  done < <(plugin_names "$root")
+}
+
+apply_managed_setup() {
+  root="$1"
+  core="$(core_script "$root")"
+  browser="$(browser_script "$root")"
+  "$browser" install --yes
+  install_plugins "$root"
+  "$core" install \
+    --scope user \
+    --with-path \
+    --with-profile \
+    --with-secrets \
+    --yes
+}
+
+doctor() {
+  root="$(marketplace_root)"
+  [ -n "$root" ] || die "the charmfile marketplace is not registered"
+  core="$(core_script "$root")"
+  browser="$(browser_script "$root")"
+  failures=0
+
+  printf 'Charmfile full doctor\n'
+  if ! "$core" doctor \
+    --scope user \
+    --with-path \
+    --with-profile \
+    --with-secrets; then
+    failures=$((failures + 1))
+  fi
+  browser_args=(doctor)
+  if [ "$require_live_chrome" = "true" ]; then
+    browser_args+=(--require-live-chrome)
+  fi
+  if ! "$browser" "${browser_args[@]}"; then
+    failures=$((failures + 1))
+  fi
+
+  installed_json="$(codex plugin list --json)"
+  plugin_failures=0
+  while IFS= read -r plugin_name; do
+    [ -n "$plugin_name" ] || continue
+    if printf '%s\n' "$installed_json" |
+      jq -e --arg id "$plugin_name@charmfile" '
+        any(.installed[];
+          .pluginId == $id and .installed == true and .enabled == true
+        )
+      ' >/dev/null; then
+      printf '  [ok] Plugin: %s\n' "$plugin_name"
+    else
+      printf '  [fail] Plugin is missing or disabled: %s\n' "$plugin_name"
+      plugin_failures=$((plugin_failures + 1))
+    fi
+  done < <(plugin_names "$root")
+  if [ "$plugin_failures" -gt 0 ]; then
+    failures=$((failures + plugin_failures))
+  fi
+
+  if [ "$failures" -gt 0 ]; then
+    printf 'Full result: %s required check(s) failed\n' "$failures"
+    return 1
+  fi
+  printf 'Full result: healthy\n'
+}
+
+command_name="${1:-help}"
+if [ "$#" -gt 0 ]; then
+  shift
+fi
+
+approved="false"
+require_live_chrome="false"
+marketplace_source="$repo_root"
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --source)
+      [ "$#" -ge 2 ] || die "--source requires a local path or Git source"
+      marketplace_source="$2"
+      shift 2
+      ;;
+    --yes)
+      approved="true"
+      shift
+      ;;
+    --require-live-chrome)
+      require_live_chrome="true"
+      shift
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    *)
+      die "unknown option: $1"
+      ;;
+  esac
+done
+
+require_macos
+
+case "$command_name" in
+  plan)
+    show_plan "$repo_root" plan
+    ;;
+  install)
+    [ "$approved" = "true" ] ||
+      die "install requires --yes after the plan is approved"
+    require_command codex
+    require_command git
+    show_plan "$repo_root" install
+    if ! command -v jq >/dev/null 2>&1; then
+      initial_browser="$(browser_script "$repo_root")"
+      "$initial_browser" install --yes
+    fi
+    codex plugin marketplace add "$marketplace_source" --json >/dev/null
+    installed_root="$(marketplace_root)"
+    [ -n "$installed_root" ] ||
+      die "Codex did not register the charmfile marketplace"
+    apply_managed_setup "$installed_root"
+    doctor
+    printf 'Open a new terminal, then start a new Codex session to load the PATH and plugins.\n'
+    ;;
+  update)
+    [ "$approved" = "true" ] ||
+      die "update requires --yes after the plan is approved"
+    require_command codex
+    require_command git
+    require_command jq
+    current_root="$(marketplace_root)"
+    [ -n "$current_root" ] ||
+      die "the charmfile marketplace is not registered"
+    marketplace_source="$current_root"
+    show_plan "$current_root" update
+    source_type="$(marketplace_source_type)"
+    if [ "$source_type" = "git" ]; then
+      codex plugin marketplace upgrade charmfile --json >/dev/null
+    else
+      printf 'Local marketplace: using the current checkout without a Git refresh.\n'
+    fi
+    refreshed_root="$(marketplace_root)"
+    [ -n "$refreshed_root" ] ||
+      die "the refreshed charmfile marketplace is unavailable"
+    apply_managed_setup "$refreshed_root"
+    doctor
+    printf 'Open a new terminal, then start a new Codex session to load the PATH and plugins.\n'
+    ;;
+  doctor)
+    require_command codex
+    require_command jq
+    doctor
+    ;;
+  help|-h|--help)
+    usage
+    ;;
+  *)
+    die "unknown command: $command_name"
+    ;;
+esac

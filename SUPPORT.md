@@ -3,6 +3,8 @@
 After publication, use GitHub Issues for:
 
 - installation failures;
+- Playwright or Chrome attachment readiness;
+- profile and update failures;
 - incorrect skill triggering;
 - validation problems;
 - documentation gaps;

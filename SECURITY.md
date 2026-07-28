@@ -18,12 +18,18 @@ advisory flow.
 - Core installation is plan-first and requires `--yes`.
 - Existing guidance is backed up before replacement.
 - Only the marked Charmfile block is managed.
+- The shell PATH change is isolated to a second marked block in `.zprofile`.
 - Malformed or duplicate markers stop installation.
-- No model, sandbox, approval policy, MCP server, or memory service is enabled
-  automatically.
+- The base `config.toml` is never edited. The opt-in profile uses on-request
+  approval and workspace-write sandboxing and contains no fixed model or
+  private MCP endpoint.
+- Unmanaged files at profile, launcher, or CLI-wrapper targets are preserved
+  or block installation.
 - Secret values stay in the operating system's secret store.
+- The Playwright Extension remains a user-approved Chrome installation.
+- Live Chrome attachment does not authorize a live-account mutation.
 - Public validation rejects personal absolute paths, credential-shaped
-  strings, TODO placeholders, and Wix-specific packaged content.
+  strings, scaffold placeholders, and excluded integration content.
 
 ## Out of scope
 

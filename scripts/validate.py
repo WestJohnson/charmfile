@@ -4,16 +4,21 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 import sys
+import tomllib
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
 PLUGINS = ROOT / "plugins"
 MARKETPLACE = ROOT / ".agents" / "plugins" / "marketplace.json"
+INSTALL_SKILL = ROOT / ".agents" / "skills" / "install-charmfile"
+RELEASE_VERSION = "0.1.0-rc.2"
 
 EXPECTED_PLUGINS = {
+    "charmfile-browser",
     "charmfile-core",
     "charmfile-memory",
     "charmfile-frontend",
@@ -24,6 +29,7 @@ EXPECTED_PLUGINS = {
 }
 
 REQUIRED_FILES = {
+    "INSTALL.md",
     "README.md",
     "AGENTS.md",
     "LICENSE",
@@ -148,6 +154,10 @@ def validate_plugins(marketplace: dict[str, dict]) -> int:
             fail(f"manifest name mismatch in {plugin_name}")
         if not SEMVER.fullmatch(str(manifest.get("version", ""))):
             fail(f"invalid semver in {plugin_name}")
+        if manifest.get("version") != RELEASE_VERSION:
+            fail(
+                f"{plugin_name} version must match release {RELEASE_VERSION}"
+            )
         if manifest.get("skills") != "./skills/":
             fail(f"{plugin_name} must declare ./skills/")
         if manifest.get("license") != "Apache-2.0":
@@ -186,6 +196,18 @@ def validate_plugins(marketplace: dict[str, dict]) -> int:
             skill_names.add(name)
             skill_count += 1
     return skill_count
+
+
+def validate_agentic_installer() -> None:
+    skill_path = INSTALL_SKILL / "SKILL.md"
+    if not skill_path.is_file():
+        fail("missing source-visible install-charmfile skill")
+    name, _description = parse_skill_frontmatter(skill_path)
+    if name != "install-charmfile":
+        fail("agentic installer skill name must be install-charmfile")
+    contract = INSTALL_SKILL / "references" / "install-contract.md"
+    if not contract.is_file():
+        fail("agentic installer is missing its install contract")
 
 
 def iter_text_files() -> list[Path]:
@@ -234,18 +256,96 @@ def validate_content() -> None:
     if any(path.name == ".env" for path in ROOT.rglob(".env")):
         fail("plaintext .env file found")
 
+    executable_paths = [
+        ROOT / "scripts" / "install-charmfile",
+        ROOT
+        / "plugins"
+        / "charmfile-core"
+        / "skills"
+        / "charmfile-setup"
+        / "scripts"
+        / "charmfile",
+        ROOT
+        / "plugins"
+        / "charmfile-core"
+        / "skills"
+        / "charmfile-setup"
+        / "assets"
+        / "charmfile-codex",
+        ROOT
+        / "plugins"
+        / "charmfile-core"
+        / "skills"
+        / "charmfile-setup"
+        / "assets"
+        / "charmfile-launcher",
+        ROOT
+        / "plugins"
+        / "charmfile-browser"
+        / "skills"
+        / "browser-setup"
+        / "scripts"
+        / "charmfile-browser",
+        ROOT
+        / "plugins"
+        / "charmfile-browser"
+        / "skills"
+        / "playwright-live-chrome"
+        / "scripts"
+        / "chrome-session.zsh",
+    ]
+    for executable in executable_paths:
+        if not executable.is_file() or not os.access(executable, os.X_OK):
+            fail(f"required executable bit is missing: {executable.relative_to(ROOT)}")
+
+    profile_text = (
+        PLUGINS
+        / "charmfile-core"
+        / "skills"
+        / "charmfile-setup"
+        / "assets"
+        / "charmfile.config.toml"
+    ).read_text(encoding="utf-8")
+    try:
+        profile = tomllib.loads(profile_text)
+    except tomllib.TOMLDecodeError as exc:
+        fail(f"portable profile is invalid TOML: {exc}")
+    for forbidden in (
+        'approval_policy = "never"',
+        'sandbox_mode = "danger-full-access"',
+        "model = ",
+        "[projects.",
+        "bearer_token",
+        "http_headers",
+    ):
+        if forbidden in profile_text:
+            fail(f"portable profile contains forbidden setting: {forbidden}")
+    if profile.get("approval_policy") != "on-request":
+        fail("portable profile must use on-request approval")
+    if profile.get("sandbox_mode") != "workspace-write":
+        fail("portable profile must use workspace-write sandboxing")
+    expected_mcp = {
+        "openaiDeveloperDocs": {
+            "url": "https://developers.openai.com/mcp"
+        }
+    }
+    if profile.get("mcp_servers") != expected_mcp:
+        fail("portable profile must contain only the public OpenAI docs MCP recipe")
+
 
 def main() -> int:
     try:
         marketplace = validate_marketplace()
         skill_count = validate_plugins(marketplace)
+        validate_agentic_installer()
         validate_content()
     except ValidationError as exc:
         print(f"[fail] {exc}", file=sys.stderr)
         return 1
     print(f"[ok] marketplace: {len(marketplace)} plugins")
-    print(f"[ok] skills: {skill_count}")
-    print("[ok] personal-path, secret, placeholder, and Wix scans")
+    print(f"[ok] plugin skills: {skill_count}")
+    print("[ok] source-visible agentic installer skill")
+    print("[ok] personal-path, secret, placeholder, and excluded-integration scans")
     return 0
 
 

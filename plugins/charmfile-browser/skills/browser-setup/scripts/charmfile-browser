@@ -1,0 +1,378 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+readonly PLAYWRIGHT_CLI_VERSION="0.1.17"
+readonly EXTENSION_ID="mmlmfjhmonkocbjadbfplnigmagldckm"
+readonly EXTENSION_URL="https://chromewebstore.google.com/detail/playwright-extension/$EXTENSION_ID"
+
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+wrapper_source="$script_dir/playwright-cli-wrapper"
+target_home="${CHARMFILE_TARGET_HOME:-$HOME}"
+runtime_dir="${CHARMFILE_PLAYWRIGHT_RUNTIME:-$target_home/.local/share/charmfile/playwright-cli}"
+runtime_cli="$runtime_dir/node_modules/.bin/playwright-cli"
+wrapper_target="$target_home/.local/bin/playwright-cli"
+chrome_app="${CHARMFILE_CHROME_APP:-/Applications/Google Chrome.app}"
+chrome_root="${CHARMFILE_CHROME_ROOT:-$target_home/Library/Application Support/Google/Chrome}"
+
+die() {
+  printf 'charmfile-browser: %s\n' "$*" >&2
+  exit 1
+}
+
+usage() {
+  printf '%s\n' \
+    "Usage:" \
+    "  charmfile-browser plan" \
+    "  charmfile-browser install --yes" \
+    "  charmfile-browser doctor [--require-live-chrome]" \
+    "" \
+    "Environment:" \
+    "  CHARMFILE_TARGET_HOME       Override the target home for testing." \
+    "  CHARMFILE_CHROME_APP        Override the Google Chrome app path." \
+    "  CHARMFILE_CHROME_ROOT       Override the Chrome profile root."
+}
+
+require_macos() {
+  [ "$(uname -s)" = "Darwin" ] ||
+    die "this Charmfile release supports macOS only"
+}
+
+node_is_compatible() {
+  command -v node >/dev/null 2>&1 || return 1
+  command -v npm >/dev/null 2>&1 || return 1
+  node_major="$(node --version | sed -E 's/^v([0-9]+).*/\1/')"
+  [ "$node_major" -ge 18 ]
+}
+
+extension_path() {
+  [ -d "$chrome_root" ] || return 0
+  find "$chrome_root" \
+    -maxdepth 4 \
+    -type d \
+    -path "*/Extensions/$EXTENSION_ID" \
+    -print \
+    -quit 2>/dev/null
+}
+
+external_cli_is_compatible() {
+  [ -x "$wrapper_target" ] || return 1
+  NO_UPDATE_NOTIFIER=1 "$wrapper_target" --version >/dev/null 2>&1 || return 1
+  NO_UPDATE_NOTIFIER=1 "$wrapper_target" --help 2>/dev/null |
+    grep -Fq 'snapshot' || return 1
+  NO_UPDATE_NOTIFIER=1 "$wrapper_target" install-browser --help \
+    >/dev/null 2>&1 || return 1
+}
+
+wrapper_action() {
+  if [ ! -e "$wrapper_target" ] && [ ! -L "$wrapper_target" ]; then
+    printf 'create'
+  elif grep -Fq 'CHARMFILE MANAGED PLAYWRIGHT WRAPPER' "$wrapper_target" 2>/dev/null; then
+    if cmp -s "$wrapper_source" "$wrapper_target"; then
+      printf 'current'
+    else
+      printf 'update'
+    fi
+  elif external_cli_is_compatible; then
+    printf 'keep-compatible-unmanaged'
+  else
+    printf 'blocked-unmanaged'
+  fi
+}
+
+show_plan() {
+  require_macos
+  needs_homebrew=false
+  blocked=false
+  printf 'Charmfile Browser plan\n'
+  if node_is_compatible; then
+    printf '  Node.js: keep %s\n' "$(node --version)"
+    printf '  npm: keep %s\n' "$(npm --version)"
+  else
+    printf '  Node.js: install or upgrade to 18+ with Homebrew\n'
+    printf '  npm: install with Node.js\n'
+    needs_homebrew=true
+  fi
+  if command -v jq >/dev/null 2>&1; then
+    printf '  jq: keep %s\n' "$(jq --version)"
+  else
+    printf '  jq: install with Homebrew\n'
+    needs_homebrew=true
+  fi
+  if [ -d "$chrome_app" ]; then
+    printf '  Google Chrome: keep %s\n' "$chrome_app"
+  else
+    printf '  Google Chrome: install with Homebrew cask\n'
+    needs_homebrew=true
+  fi
+  if [ "$needs_homebrew" = "true" ]; then
+    if command -v brew >/dev/null 2>&1; then
+      printf '  Homebrew: keep %s\n' "$(command -v brew)"
+    else
+      printf '  Homebrew: required but unavailable\n'
+      blocked=true
+    fi
+  else
+    printf '  Homebrew: not required\n'
+  fi
+  action="$(wrapper_action)"
+  if [ "$action" = "keep-compatible-unmanaged" ]; then
+    printf '  Playwright CLI: keep compatible external version %s\n' \
+      "$(NO_UPDATE_NOTIFIER=1 "$wrapper_target" --version)"
+    printf '  Playwright Chromium: verify or install through the external CLI\n'
+  else
+    printf '  Playwright CLI: install @playwright/cli@%s under %s\n' \
+      "$PLAYWRIGHT_CLI_VERSION" "$runtime_dir"
+    printf '  Playwright Chromium: install through the owned CLI runtime\n'
+  fi
+  printf '  CLI wrapper: %s %s\n' "$action" "$wrapper_target"
+  if [ -n "$(extension_path)" ]; then
+    printf '  Playwright Extension: detected\n'
+  else
+    printf '  Playwright Extension: manual install required for signed-in Chrome\n'
+    printf '  Extension URL: %s\n' "$EXTENSION_URL"
+  fi
+  printf '  Existing Chrome profiles and tabs: unchanged\n'
+  [ "$action" != "blocked-unmanaged" ] || blocked=true
+  [ "$blocked" != "true" ]
+}
+
+install_system_dependencies() {
+  formulae=()
+  if ! node_is_compatible; then
+    formulae+=("node")
+  fi
+  if ! command -v jq >/dev/null 2>&1; then
+    formulae+=("jq")
+  fi
+  if [ "${#formulae[@]}" -gt 0 ]; then
+    command -v brew >/dev/null 2>&1 ||
+      die "Homebrew is required to install: ${formulae[*]}"
+    brew install "${formulae[@]}"
+    hash -r
+  fi
+  if [ ! -d "$chrome_app" ]; then
+    command -v brew >/dev/null 2>&1 ||
+      die "Homebrew is required to install Google Chrome"
+    brew install --cask google-chrome
+  fi
+  node_is_compatible ||
+    die "Node.js 18+ and npm are still unavailable after dependency installation"
+  command -v jq >/dev/null 2>&1 ||
+    die "jq is still unavailable after dependency installation"
+  [ -d "$chrome_app" ] ||
+    die "Google Chrome is still unavailable after dependency installation"
+}
+
+backup_if_changed() {
+  target="$1"
+  source="$2"
+  if [ -e "$target" ] && ! cmp -s "$source" "$target"; then
+    timestamp="$(date -u '+%Y%m%dT%H%M%SZ')"
+    backup="$target.backup.$timestamp"
+    cp -p "$target" "$backup"
+    printf 'Backup created: %s\n' "$backup"
+  fi
+}
+
+install_runtime() {
+  action="$(wrapper_action)"
+  [ "$action" != "blocked-unmanaged" ] ||
+    die "refusing to overwrite unmanaged wrapper: $wrapper_target"
+  [ -f "$wrapper_source" ] || die "managed wrapper source is missing"
+
+  if [ "$action" = "keep-compatible-unmanaged" ]; then
+    NO_UPDATE_NOTIFIER=1 "$wrapper_target" install-browser chromium
+    printf 'Compatible external Playwright CLI preserved: %s\n' "$wrapper_target"
+    return
+  fi
+
+  mkdir -p "$runtime_dir"
+  npm install \
+    --prefix "$runtime_dir" \
+    --no-audit \
+    --no-fund \
+    "@playwright/cli@$PLAYWRIGHT_CLI_VERSION"
+  [ -x "$runtime_cli" ] || die "npm did not install the Playwright CLI"
+  NO_UPDATE_NOTIFIER=1 "$runtime_cli" install-browser chromium
+
+  mkdir -p "$(dirname "$wrapper_target")"
+  backup_if_changed "$wrapper_target" "$wrapper_source"
+  if [ ! -e "$wrapper_target" ] || ! cmp -s "$wrapper_source" "$wrapper_target"; then
+    cp "$wrapper_source" "$wrapper_target"
+    chmod 755 "$wrapper_target"
+    printf 'CLI wrapper installed: %s\n' "$wrapper_target"
+  else
+    printf 'CLI wrapper is already current: %s\n' "$wrapper_target"
+  fi
+}
+
+doctor() {
+  require_live_chrome="$1"
+  failures=0
+  isolated_ready=true
+  live_ready=true
+  printf 'Charmfile Browser doctor\n'
+
+  printf '  [ok] Platform: macOS\n'
+  if node_is_compatible; then
+    printf '  [ok] Node.js: %s\n' "$(node --version)"
+    printf '  [ok] npm: %s\n' "$(npm --version)"
+  else
+    printf '  [fail] Node.js 18+ with npm is unavailable\n'
+    failures=$((failures + 1))
+    isolated_ready=false
+    live_ready=false
+  fi
+  if command -v jq >/dev/null 2>&1; then
+    printf '  [ok] jq: %s\n' "$(jq --version)"
+  else
+    printf '  [fail] jq is unavailable\n'
+    failures=$((failures + 1))
+    isolated_ready=false
+    live_ready=false
+  fi
+  if [ -d "$chrome_app" ]; then
+    printf '  [ok] Google Chrome: %s\n' "$chrome_app"
+  else
+    printf '  [fail] Google Chrome is unavailable\n'
+    failures=$((failures + 1))
+    isolated_ready=false
+    live_ready=false
+  fi
+  action="$(wrapper_action)"
+  checked_cli=""
+  if [ "$action" = "current" ]; then
+    checked_cli="$runtime_cli"
+  elif [ "$action" = "keep-compatible-unmanaged" ]; then
+    checked_cli="$wrapper_target"
+  fi
+  if [ -n "$checked_cli" ] && [ -x "$checked_cli" ]; then
+    installed_version="$(NO_UPDATE_NOTIFIER=1 "$checked_cli" --version)"
+    if [ "$action" = "keep-compatible-unmanaged" ]; then
+      printf '  [ok] Compatible external Playwright CLI: %s\n' \
+        "$installed_version"
+    elif [ "$installed_version" = "$PLAYWRIGHT_CLI_VERSION" ]; then
+      printf '  [ok] Playwright CLI: %s\n' "$installed_version"
+    else
+      printf '  [fail] Playwright CLI: expected %s, got %s\n' \
+        "$PLAYWRIGHT_CLI_VERSION" "$installed_version"
+      failures=$((failures + 1))
+      isolated_ready=false
+      live_ready=false
+    fi
+    if NO_UPDATE_NOTIFIER=1 "$checked_cli" install-browser --list 2>/dev/null |
+      grep -Fq '/chromium-'; then
+      printf '  [ok] Playwright Chromium installed\n'
+    else
+      printf '  [fail] Playwright Chromium is not installed\n'
+      failures=$((failures + 1))
+      isolated_ready=false
+      live_ready=false
+    fi
+  else
+    printf '  [fail] Charmfile Playwright runtime is unavailable\n'
+    failures=$((failures + 1))
+    isolated_ready=false
+    live_ready=false
+  fi
+  if [ "$action" = "current" ]; then
+    printf '  [ok] Managed CLI wrapper: %s\n' "$wrapper_target"
+  elif [ "$action" = "keep-compatible-unmanaged" ]; then
+    printf '  [ok] Compatible external CLI preserved: %s\n' "$wrapper_target"
+  else
+    printf '  [fail] Managed CLI wrapper is missing, stale, or blocked\n'
+    failures=$((failures + 1))
+    isolated_ready=false
+    live_ready=false
+  fi
+  case ":$PATH:" in
+    *":$(dirname "$wrapper_target"):"*)
+      printf '  [ok] Wrapper directory is on PATH\n'
+      ;;
+    *)
+      printf '  [note] Add %s to PATH for direct playwright-cli use\n' \
+        "$(dirname "$wrapper_target")"
+      ;;
+  esac
+
+  extension="$(extension_path)"
+  if [ -n "$extension" ]; then
+    printf '  [ok] Official Playwright Extension detected\n'
+  else
+    live_ready=false
+    printf '  [action] Install the official extension for signed-in Chrome: %s\n' \
+      "$EXTENSION_URL"
+    if [ "$require_live_chrome" = "true" ]; then
+      failures=$((failures + 1))
+    fi
+  fi
+
+  if [ "$isolated_ready" = "true" ]; then
+    printf 'Isolated Playwright: ready\n'
+  else
+    printf 'Isolated Playwright: unavailable\n'
+  fi
+  if [ "$live_ready" = "true" ]; then
+    printf 'Signed-in Chrome: ready for user-approved attachment\n'
+  else
+    printf 'Signed-in Chrome: action required\n'
+  fi
+
+  if [ "$failures" -gt 0 ]; then
+    printf 'Result: %s required check(s) failed\n' "$failures"
+    return 1
+  fi
+  printf 'Result: healthy\n'
+}
+
+command_name="${1:-help}"
+if [ "$#" -gt 0 ]; then
+  shift
+fi
+approved=false
+require_live_chrome=false
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --yes)
+      approved=true
+      shift
+      ;;
+    --require-live-chrome)
+      require_live_chrome=true
+      shift
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    *)
+      die "unknown option: $1"
+      ;;
+  esac
+done
+
+case "$command_name" in
+  plan)
+    show_plan
+    ;;
+  install)
+    [ "$approved" = "true" ] ||
+      die "install requires --yes after the plan is approved"
+    require_macos
+    [ "$(wrapper_action)" != "blocked-unmanaged" ] ||
+      die "refusing to overwrite unmanaged wrapper: $wrapper_target"
+    show_plan
+    install_system_dependencies
+    install_runtime
+    doctor false
+    ;;
+  doctor)
+    doctor "$require_live_chrome"
+    ;;
+  help|-h|--help)
+    usage
+    ;;
+  *)
+    die "unknown command: $command_name"
+    ;;
+esac

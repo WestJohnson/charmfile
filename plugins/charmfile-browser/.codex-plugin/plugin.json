@@ -1,0 +1,31 @@
+{
+  "name": "charmfile-browser",
+  "version": "0.1.0-rc.2",
+  "description": "Install and operate reproducible Playwright automation with an explicit signed-in Chrome path.",
+  "author": {
+    "name": "Charmfile contributors",
+    "url": "https://github.com/WestJohnson/charmfile"
+  },
+  "homepage": "https://github.com/WestJohnson/charmfile",
+  "repository": "https://github.com/WestJohnson/charmfile",
+  "license": "Apache-2.0",
+  "keywords": ["browser", "playwright", "chrome", "testing"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Charmfile Browser",
+    "shortDescription": "Playwright automation with deliberate Chrome attachment.",
+    "longDescription": "Set up isolated Playwright automation and, when explicitly needed, attach Microsoft Playwright CLI to a user-approved tab in the existing signed-in Google Chrome profile.",
+    "developerName": "Charmfile contributors",
+    "category": "Developer Tools",
+    "capabilities": ["Read", "Write"],
+    "websiteURL": "https://github.com/WestJohnson/charmfile",
+    "privacyPolicyURL": "https://github.com/WestJohnson/charmfile/blob/main/PRIVACY.md",
+    "termsOfServiceURL": "https://github.com/WestJohnson/charmfile/blob/main/LICENSE",
+    "defaultPrompt": [
+      "Set up Playwright for isolated browser automation.",
+      "Attach to my selected signed-in Chrome tab.",
+      "Diagnose why the browser transport is unavailable."
+    ],
+    "brandColor": "#176548"
+  }
+}

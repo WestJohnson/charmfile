@@ -28,15 +28,20 @@ from an uncommitted working tree.
 Before a public announcement:
 
 ```sh
-codex plugin marketplace add .
-codex plugin add charmfile-core@charmfile
+./scripts/install-charmfile plan
+./scripts/install-charmfile install --yes
+./scripts/install-charmfile doctor --require-live-chrome
 ```
 
-Start a new conversation, run `$charmfile-setup`, and test at least:
+Start a new conversation and test at least:
 
 - a new global install;
 - append to unrelated existing guidance;
 - update of an existing managed block;
+- preservation of compatible external helpers;
+- rejection of unmanaged conflicting targets;
+- isolated Playwright and signed-in Chrome as separate states;
+- Git-backed `charmfile update --yes`;
 - backup restoration;
 - one representative prompt per optional pack.
 

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Charmfile Browser Setup"
+  short_description: "Prepare Playwright on macOS"
+  default_prompt: "Use $browser-setup to plan or verify the Charmfile Playwright setup on this Mac."

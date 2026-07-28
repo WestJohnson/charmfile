@@ -1,0 +1,4 @@
+interface:
+  display_name: "Playwright Live Chrome"
+  short_description: "Operate authenticated Chrome from Codex CLI"
+  default_prompt: "Use $playwright-live-chrome to inspect and operate the selected signed-in Chrome tab."

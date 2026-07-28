@@ -4,6 +4,10 @@ set -euo pipefail
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 skill_dir="$(cd "$script_dir/.." && pwd)"
 guidance_template="$skill_dir/assets/AGENTS.block.md"
+path_template="$skill_dir/assets/zprofile.block.sh"
+profile_source="$skill_dir/assets/charmfile.config.toml"
+codex_launcher_source="$skill_dir/assets/charmfile-codex"
+lifecycle_launcher_source="$skill_dir/assets/charmfile-launcher"
 secrets_source="$script_dir/codex-secrets"
 
 die() {
@@ -16,12 +20,17 @@ usage() {
     "Charmfile — a small agent setup that works like magic." \
     "" \
     "Usage:" \
-    "  charmfile plan    [--scope user|repo] [--repo PATH] [--with-secrets]" \
-    "  charmfile install [--scope user|repo] [--repo PATH] [--with-secrets] --yes" \
-    "  charmfile doctor  [--scope user|repo] [--repo PATH]" \
+    "  charmfile plan    [--scope user|repo] [--repo PATH] [--with-path] [--with-profile] [--with-secrets]" \
+    "  charmfile install [--scope user|repo] [--repo PATH] [--with-path] [--with-profile] [--with-secrets] --yes" \
+    "  charmfile doctor  [--scope user|repo] [--repo PATH] [--with-path] [--with-profile] [--with-secrets]" \
     "" \
     "Environment:" \
     "  CHARMFILE_TARGET_HOME  Override the target home for testing or managed installs."
+}
+
+require_macos() {
+  [ "$(uname -s)" = "Darwin" ] ||
+    die "this Charmfile release supports macOS only"
 }
 
 command_name="${1:-help}"
@@ -32,6 +41,8 @@ fi
 scope="user"
 repo_path="$PWD"
 approved="false"
+with_path="false"
+with_profile="false"
 with_secrets="false"
 
 while [ "$#" -gt 0 ]; do
@@ -45,6 +56,14 @@ while [ "$#" -gt 0 ]; do
       [ "$#" -ge 2 ] || die "--repo requires a path"
       repo_path="$2"
       shift 2
+      ;;
+    --with-profile)
+      with_profile="true"
+      shift
+      ;;
+    --with-path)
+      with_path="true"
+      shift
       ;;
     --with-secrets)
       with_secrets="true"
@@ -64,24 +83,31 @@ while [ "$#" -gt 0 ]; do
   esac
 done
 
+require_macos
+
 case "$scope" in
   user)
     target_home="${CHARMFILE_TARGET_HOME:-$HOME}"
     guidance_target="$target_home/.codex/AGENTS.md"
-    secrets_target="$target_home/.local/bin/codex-secrets"
     ;;
   repo)
     [ -d "$repo_path" ] || die "repository path does not exist: $repo_path"
     guidance_target="$(cd "$repo_path" && pwd)/AGENTS.md"
     target_home="${CHARMFILE_TARGET_HOME:-$HOME}"
-    secrets_target="$target_home/.local/bin/codex-secrets"
     ;;
   *)
     die "--scope must be user or repo"
     ;;
 esac
 
+profile_target="$target_home/.codex/charmfile.config.toml"
+path_target="$target_home/.zprofile"
+codex_launcher_target="$target_home/.local/bin/charmfile-codex"
+lifecycle_launcher_target="$target_home/.local/bin/charmfile"
+secrets_target="$target_home/.local/bin/codex-secrets"
+
 [ -f "$guidance_template" ] || die "guidance template is missing"
+[ -f "$path_template" ] || die "PATH template is missing"
 
 marker_count() {
   local marker="$1"
@@ -110,7 +136,15 @@ managed_markers_are_valid() {
   [ "$start_line" -lt "$end_line" ]
 }
 
-planned_action() {
+planned_guidance_action() {
+  if [ -L "$guidance_target" ]; then
+    printf 'blocked-symlink'
+    return
+  fi
+  if [ -e "$guidance_target" ] && [ ! -f "$guidance_target" ]; then
+    printf 'blocked-nonregular'
+    return
+  fi
   if [ ! -f "$guidance_target" ]; then
     printf 'create'
     return
@@ -126,29 +160,164 @@ planned_action() {
   fi
 }
 
-show_plan() {
-  action="$(planned_action)"
-  printf 'Charmfile plan\n'
-  printf '  scope: %s\n' "$scope"
-  printf '  guidance target: %s\n' "$guidance_target"
-  printf '  guidance action: %s\n' "$action"
-  printf '  existing-file backup: %s.backup.<UTC timestamp>\n' "$guidance_target"
-  if [ "$with_secrets" = "true" ]; then
-    printf '  secret helper target: %s\n' "$secrets_target"
-  else
-    printf '  secret helper: unchanged\n'
+path_markers_are_valid() {
+  local file_path="$1"
+  local start_count
+  local end_count
+  local start_line
+  local end_line
+
+  [ -f "$file_path" ] || return 1
+  start_count="$(marker_count '# CHARMFILE:PATH:START' "$file_path")"
+  end_count="$(marker_count '# CHARMFILE:PATH:END' "$file_path")"
+  [ "$start_count" -eq 1 ] && [ "$end_count" -eq 1 ] || return 1
+  start_line="$(grep -Fn -- '# CHARMFILE:PATH:START' "$file_path" | cut -d: -f1)"
+  end_line="$(grep -Fn -- '# CHARMFILE:PATH:END' "$file_path" | cut -d: -f1)"
+  [ "$start_line" -lt "$end_line" ]
+}
+
+path_block_is_current() {
+  path_markers_are_valid "$path_target" || return 1
+  awk '
+    $0 == "# CHARMFILE:PATH:START" { printing = 1 }
+    printing { print }
+    $0 == "# CHARMFILE:PATH:END" { exit }
+  ' "$path_target" | cmp -s "$path_template" -
+}
+
+planned_path_action() {
+  if [ -L "$path_target" ]; then
+    printf 'blocked-symlink'
+    return
   fi
-  printf '  config.toml: unchanged\n'
-  printf '  model and sandbox: unchanged\n'
-  if [ "$action" = "blocked-invalid-markers" ]; then
-    return 1
+  if [ -e "$path_target" ] && [ ! -f "$path_target" ]; then
+    printf 'blocked-nonregular'
+    return
+  fi
+  if [ ! -f "$path_target" ]; then
+    printf 'create'
+    return
+  fi
+  start_count="$(marker_count '# CHARMFILE:PATH:START' "$path_target")"
+  end_count="$(marker_count '# CHARMFILE:PATH:END' "$path_target")"
+  if [ "$start_count" -eq 0 ] && [ "$end_count" -eq 0 ]; then
+    printf 'append'
+  elif path_markers_are_valid "$path_target"; then
+    if path_block_is_current; then
+      printf 'current'
+    else
+      printf 'update'
+    fi
+  else
+    printf 'blocked-invalid-markers'
   fi
 }
 
+managed_file_action() {
+  local source="$1"
+  local target="$2"
+  local marker="$3"
+  if [ ! -e "$target" ] && [ ! -L "$target" ]; then
+    printf 'create'
+  elif [ -L "$target" ]; then
+    printf 'blocked-unmanaged'
+  elif ! grep -Fq "$marker" "$target" 2>/dev/null; then
+    printf 'blocked-unmanaged'
+  elif cmp -s "$source" "$target"; then
+    printf 'current'
+  else
+    printf 'update'
+  fi
+}
+
+secret_helper_action() {
+  action="$(managed_file_action \
+    "$secrets_source" "$secrets_target" \
+    'SERVICE_PREFIX="dev.charmfile.codex-secrets"')"
+  if [ "$action" = "blocked-unmanaged" ] &&
+    [ -x "$secrets_target" ]; then
+    helper_usage="$("$secrets_target" --help 2>/dev/null || true)"
+  else
+    helper_usage=""
+  fi
+  if [ "$action" = "blocked-unmanaged" ] &&
+    printf '%s\n' "$helper_usage" | grep -Fq 'run NAME' &&
+    printf '%s\n' "$helper_usage" | grep -Fq 'doctor'; then
+    printf 'keep-compatible-unmanaged'
+  else
+    printf '%s' "$action"
+  fi
+}
+
+show_plan() {
+  local guidance_action
+  local blocked
+  guidance_action="$(planned_guidance_action)"
+  blocked="false"
+  printf 'Charmfile Core plan\n'
+  printf '  platform: macOS only\n'
+  printf '  scope: %s\n' "$scope"
+  printf '  guidance target: %s\n' "$guidance_target"
+  printf '  guidance action: %s\n' "$guidance_action"
+  printf '  existing-file backup: %s.backup.<UTC timestamp>\n' "$guidance_target"
+  if [ "$with_path" = "true" ]; then
+    path_action="$(planned_path_action)"
+    printf '  shell PATH block: %s %s\n' "$path_action" "$path_target"
+    printf '  shell backup: %s.backup.<UTC timestamp>\n' "$path_target"
+    case "$path_action" in
+      blocked-*) blocked="true" ;;
+    esac
+  else
+    printf '  shell PATH: unchanged\n'
+  fi
+  if [ "$with_profile" = "true" ]; then
+    profile_action="$(managed_file_action \
+      "$profile_source" "$profile_target" 'CHARMFILE MANAGED PROFILE')"
+    codex_launcher_action="$(managed_file_action \
+      "$codex_launcher_source" "$codex_launcher_target" \
+      'CHARMFILE MANAGED CODEX LAUNCHER')"
+    lifecycle_action="$(managed_file_action \
+      "$lifecycle_launcher_source" "$lifecycle_launcher_target" \
+      'CHARMFILE MANAGED LIFECYCLE LAUNCHER')"
+    printf '  portable profile: %s %s\n' "$profile_action" "$profile_target"
+    printf '  profile launcher: %s %s\n' \
+      "$codex_launcher_action" "$codex_launcher_target"
+    printf '  lifecycle launcher: %s %s\n' \
+      "$lifecycle_action" "$lifecycle_launcher_target"
+    for action in "$profile_action" "$codex_launcher_action" "$lifecycle_action"; do
+      [ "$action" != "blocked-unmanaged" ] || blocked="true"
+    done
+  else
+    printf '  portable profile and launchers: unchanged\n'
+  fi
+  if [ "$with_secrets" = "true" ]; then
+    secrets_action="$(secret_helper_action)"
+    printf '  secret helper: %s %s\n' "$secrets_action" "$secrets_target"
+    [ "$secrets_action" != "blocked-unmanaged" ] || blocked="true"
+  else
+    printf '  secret helper: unchanged\n'
+  fi
+  printf '  base config.toml: unchanged\n'
+  printf '  model, projects, private MCP, and plugin state: unchanged\n'
+  case "$guidance_action" in
+    blocked-*) return 1 ;;
+  esac
+  [ "$blocked" != "true" ]
+}
+
 install_guidance() {
-  action="$(planned_action)"
-  [ "$action" != "blocked-invalid-markers" ] ||
-    die "target has malformed or duplicate Charmfile markers"
+  action="$(planned_guidance_action)"
+  case "$action" in
+    blocked-invalid-markers)
+      die "target has malformed or duplicate Charmfile markers"
+      ;;
+    blocked-symlink)
+      die "refusing to replace a symlink guidance target: $guidance_target"
+      ;;
+    blocked-nonregular)
+      die "refusing to replace a non-regular guidance target: $guidance_target"
+      ;;
+  esac
 
   target_dir="$(dirname "$guidance_target")"
   mkdir -p "$target_dir"
@@ -206,32 +375,124 @@ install_guidance() {
   printf 'Guidance installed: %s\n' "$guidance_target"
 }
 
-install_secrets() {
-  if [ "$with_secrets" != "true" ]; then
-    return 0
-  fi
-  [ -f "$secrets_source" ] || die "codex-secrets source is missing"
-  secrets_dir="$(dirname "$secrets_target")"
-  mkdir -p "$secrets_dir"
-  if [ -f "$secrets_target" ] && cmp -s "$secrets_source" "$secrets_target"; then
-    printf 'Secret helper is already current: %s\n' "$secrets_target"
+install_path() {
+  [ "$with_path" = "true" ] || return 0
+  action="$(planned_path_action)"
+  case "$action" in
+    blocked-invalid-markers)
+      die "shell profile has malformed or duplicate Charmfile PATH markers"
+      ;;
+    blocked-symlink)
+      die "refusing to replace a symlink shell profile: $path_target"
+      ;;
+    blocked-nonregular)
+      die "refusing to replace a non-regular shell profile: $path_target"
+      ;;
+  esac
+  if [ "$action" = "current" ]; then
+    printf 'Shell PATH block is already current: %s\n' "$path_target"
     return
   fi
-  if [ -f "$secrets_target" ]; then
-    timestamp="$(date -u '+%Y%m%dT%H%M%SZ')"
-    backup_path="$secrets_target.backup.$timestamp"
-    cp -p "$secrets_target" "$backup_path"
-    printf 'Secret helper backup created: %s\n' "$backup_path"
+
+  target_dir="$(dirname "$path_target")"
+  mkdir -p "$target_dir"
+  target_temp="$(mktemp "$target_dir/.charmfile-zprofile.XXXXXX")"
+  if [ "$action" = "create" ]; then
+    sed -n '1,$p' "$path_template" > "$target_temp"
+  elif [ "$action" = "append" ]; then
+    {
+      sed -n '1,$p' "$path_target"
+      printf '\n\n'
+      sed -n '1,$p' "$path_template"
+    } > "$target_temp"
+  else
+    awk -v replacement="$path_template" '
+      $0 == "# CHARMFILE:PATH:START" {
+        while ((getline replacement_line < replacement) > 0) {
+          print replacement_line
+        }
+        close(replacement)
+        skipping = 1
+        next
+      }
+      $0 == "# CHARMFILE:PATH:END" {
+        skipping = 0
+        next
+      }
+      !skipping { print }
+    ' "$path_target" > "$target_temp"
   fi
-  cp "$secrets_source" "$secrets_target"
-  chmod 700 "$secrets_target"
+
+  if [ -f "$path_target" ]; then
+    timestamp="$(date -u '+%Y%m%dT%H%M%SZ')"
+    backup_path="$path_target.backup.$timestamp"
+    cp -p "$path_target" "$backup_path"
+    printf 'Shell profile backup created: %s\n' "$backup_path"
+  fi
+  chmod 644 "$target_temp"
+  mv "$target_temp" "$path_target"
+  printf 'Shell PATH block installed: %s\n' "$path_target"
+}
+
+install_managed_file() {
+  local source="$1"
+  local target="$2"
+  local marker="$3"
+  local mode="$4"
+  local label="$5"
+  local action
+
+  action="$(managed_file_action "$source" "$target" "$marker")"
+  [ "$action" != "blocked-unmanaged" ] ||
+    die "refusing to overwrite unmanaged target: $target"
+  if [ "$action" = "current" ]; then
+    printf '%s is already current: %s\n' "$label" "$target"
+    return
+  fi
+
+  mkdir -p "$(dirname "$target")"
+  if [ -e "$target" ]; then
+    timestamp="$(date -u '+%Y%m%dT%H%M%SZ')"
+    backup_path="$target.backup.$timestamp"
+    cp -p "$target" "$backup_path"
+    printf '%s backup created: %s\n' "$label" "$backup_path"
+  fi
+  target_temp="$(mktemp "$(dirname "$target")/.charmfile-managed.XXXXXX")"
+  cp "$source" "$target_temp"
+  chmod "$mode" "$target_temp"
+  mv "$target_temp" "$target"
+  printf '%s installed: %s\n' "$label" "$target"
+}
+
+install_profile() {
+  [ "$with_profile" = "true" ] || return 0
+  install_managed_file \
+    "$profile_source" "$profile_target" \
+    'CHARMFILE MANAGED PROFILE' 600 'Portable profile'
+  install_managed_file \
+    "$codex_launcher_source" "$codex_launcher_target" \
+    'CHARMFILE MANAGED CODEX LAUNCHER' 700 'Profile launcher'
+  install_managed_file \
+    "$lifecycle_launcher_source" "$lifecycle_launcher_target" \
+    'CHARMFILE MANAGED LIFECYCLE LAUNCHER' 700 'Lifecycle launcher'
+}
+
+install_secrets() {
+  [ "$with_secrets" = "true" ] || return 0
+  if [ "$(secret_helper_action)" = "keep-compatible-unmanaged" ]; then
+    printf 'Compatible external secret helper preserved: %s\n' "$secrets_target"
+    return
+  fi
+  install_managed_file \
+    "$secrets_source" "$secrets_target" \
+    'SERVICE_PREFIX="dev.charmfile.codex-secrets"' 700 'Secret helper'
   "$secrets_target" doctor
-  printf 'Secret helper installed: %s\n' "$secrets_target"
 }
 
 doctor() {
   failures=0
-  printf 'Charmfile doctor\n'
+  printf 'Charmfile Core doctor\n'
+  printf '  [ok] Platform: macOS\n'
   if command -v codex >/dev/null 2>&1; then
     printf '  [ok] Codex: %s\n' "$(command -v codex)"
   else
@@ -251,6 +512,47 @@ doctor() {
     failures=$((failures + 1))
   fi
 
+  if [ "$with_profile" = "true" ]; then
+    for spec in \
+      "$profile_source|$profile_target|Portable profile" \
+      "$codex_launcher_source|$codex_launcher_target|Profile launcher" \
+      "$lifecycle_launcher_source|$lifecycle_launcher_target|Lifecycle launcher"; do
+      source_path="${spec%%|*}"
+      remainder="${spec#*|}"
+      target_path="${remainder%%|*}"
+      label="${remainder#*|}"
+      if [ -e "$target_path" ] && cmp -s "$source_path" "$target_path"; then
+        printf '  [ok] %s: %s\n' "$label" "$target_path"
+      else
+        printf '  [fail] %s is missing or stale: %s\n' "$label" "$target_path"
+        failures=$((failures + 1))
+      fi
+    done
+    if command -v codex >/dev/null 2>&1 &&
+      CODEX_HOME="$target_home/.codex" \
+        codex --profile charmfile debug prompt-input \
+        'Charmfile profile doctor' >/dev/null 2>&1; then
+      printf '  [ok] Portable profile loads in Codex\n'
+    else
+      printf '  [fail] Portable profile does not load in Codex\n'
+      failures=$((failures + 1))
+    fi
+  else
+    printf '  [note] Portable profile was not required for this check\n'
+  fi
+
+  if [ "$with_path" = "true" ]; then
+    if path_block_is_current; then
+      printf '  [ok] Shell PATH block: %s\n' "$path_target"
+    else
+      printf '  [fail] Shell PATH block is missing, stale, or malformed: %s\n' \
+        "$path_target"
+      failures=$((failures + 1))
+    fi
+  else
+    printf '  [note] Shell PATH block was not required for this check\n'
+  fi
+
   if command -v git >/dev/null 2>&1; then
     printf '  [ok] Git available\n'
   else
@@ -265,8 +567,12 @@ doctor() {
     if "$secrets_target" doctor >/dev/null 2>&1; then
       printf '  [ok] Optional secret helper\n'
     else
-      printf '  [note] Secret helper exists but its backend is unavailable\n'
+      printf '  [fail] Secret helper exists but macOS Keychain is unavailable\n'
+      failures=$((failures + 1))
     fi
+  elif [ "$with_secrets" = "true" ]; then
+    printf '  [fail] Required secret helper is not installed\n'
+    failures=$((failures + 1))
   else
     printf '  [note] Optional secret helper is not installed\n'
   fi
@@ -292,6 +598,8 @@ case "$command_name" in
       die "install requires --yes after the plan is approved"
     show_plan
     install_guidance
+    install_path
+    install_profile
     install_secrets
     doctor
     ;;

@@ -34,6 +34,8 @@
 
 - Use Google Chrome as the default browser surface.
 - For signed-in work, attach to the user's existing Chrome session.
+- In Codex CLI, use `$playwright-live-chrome` for an existing signed-in tab and
+  `$playwright-cli` for isolated automation.
 - Do not silently launch an isolated browser profile for authenticated tasks.
 - Use an isolated browser only for local or unauthenticated testing.
 - If Chrome is unavailable, report that plainly instead of silently switching

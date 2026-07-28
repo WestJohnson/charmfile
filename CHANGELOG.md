@@ -1,13 +1,30 @@
 # Changelog
 
-## 0.1.0-rc.1 - Unreleased
+## 0.1.0-rc.2 - Unreleased
+
+- Made the public package and lifecycle explicitly macOS-only.
+- Added a source-visible agentic installer with plan, install, update, and
+  full-doctor workflows.
+- Added the `charmfile-browser` pack with the Microsoft Playwright CLI skill,
+  reproducible isolated automation, and explicit signed-in Chrome attachment.
+- Added separate readiness reporting for isolated Playwright and live Chrome.
+- Added a managed, conservative `charmfile.config.toml` profile and
+  `charmfile-codex` launcher without modifying the base user config.
+- Added a bounded `.zprofile` block so the installed launchers work without
+  manual PATH repair.
+- Added updateable lifecycle launchers and Git-marketplace refresh behavior.
+- Preserved compatible existing Playwright and secret helpers.
+- Expanded isolated tests for the eight-pack marketplace, browser modes,
+  profile safety, full installation, and local updates.
+
+## 0.1.0-rc.1 - 2026-07-27
 
 - Introduced the Charmfile name and plugin marketplace.
 - Added a plan-first core installer and setup doctor.
 - Added conservative public `AGENTS.md` guidance.
-- Added optional Keychain and libsecret credential injection.
+- Added optional Keychain credential injection.
 - Packaged durable memory, frontend, marketing, research, infrastructure, and
   Three.js skills as independently installable plugins.
 - Removed personal absolute paths and implicit `.env` discovery.
-- Excluded Wix-specific workflows and personal configuration.
+- Excluded account-specific workflows and personal configuration.
 - Added validation, privacy, security, attribution, and publishing gates.

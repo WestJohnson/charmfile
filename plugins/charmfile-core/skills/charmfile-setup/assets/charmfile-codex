@@ -1,0 +1,10 @@
+#!/bin/sh
+# CHARMFILE MANAGED CODEX LAUNCHER
+set -eu
+
+command -v codex >/dev/null 2>&1 || {
+  printf 'charmfile-codex: codex is not on PATH\n' >&2
+  exit 1
+}
+
+exec codex --profile charmfile "$@"

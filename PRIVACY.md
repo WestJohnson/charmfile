@@ -9,16 +9,37 @@ The setup helper reads only:
 
 - its bundled templates;
 - the exact target `AGENTS.md` selected by the user;
-- local command availability needed for `doctor`.
+- the Charmfile marketplace and installed-plugin status;
+- local dependency and Chrome-extension presence needed for `doctor`.
 
-It writes only after explicit approval and only to the reported guidance target
-and, when requested, the local `codex-secrets` executable path.
+It writes only after explicit approval and only to the reported managed
+targets. The portable profile is separate from the user's base `config.toml`.
+It contains no fixed model, personal path, project trust, private MCP endpoint,
+credential, or account identifier.
+
+The installer adds `~/.local/bin` through one bounded block in `.zprofile` and
+preserves all unrelated shell configuration.
+
+When the approved plan reports missing browser dependencies, the installer may
+ask Homebrew to install Node.js, jq, or Google Chrome and npm to install the
+pinned Playwright CLI. Those actions are listed before approval.
 
 ## Secret helper
 
-`codex-secrets` stores values in macOS Keychain or Linux libsecret. Its local
-registry contains variable names only. Charmfile does not receive, transmit, or
-retain those values.
+`codex-secrets` stores values in macOS Keychain. Its local registry contains
+variable names only. Charmfile does not receive, transmit, or retain those
+values.
+
+## Browser setup
+
+The browser doctor checks command versions, the Google Chrome application, and
+whether the official Playwright Extension directory exists in a local Chrome
+profile. It does not read browser history, cookies, passwords, page content,
+or storage.
+
+The optional extension handshake token is stored in macOS Keychain. The user
+approves the extension installation, connection, and selected tab. Playwright
+artifacts remain local unless the user chooses to share them.
 
 ## Optional memory
 

@@ -1,0 +1,37 @@
+# CHARMFILE MANAGED PROFILE
+# Launch with `charmfile-codex` or `codex --profile charmfile`.
+# Personal model, project, permission, plugin, and private MCP settings stay in
+# the user's base config and are intentionally not copied into this profile.
+
+approval_policy = "on-request"
+sandbox_mode = "workspace-write"
+web_search = "live"
+
+[tui]
+notifications = true
+notification_condition = "always"
+status_line = [
+  "model-with-reasoning",
+  "current-dir",
+  "context-remaining",
+  "five-hour-limit",
+  "weekly-limit",
+  "used-tokens",
+  "fast-mode",
+]
+
+[features]
+hooks = true
+memories = true
+
+[memories]
+generate_memories = true
+use_memories = true
+disable_on_external_context = true
+min_rate_limit_remaining_percent = 25
+
+[agents]
+max_concurrent_threads_per_session = 4
+
+[mcp_servers.openaiDeveloperDocs]
+url = "https://developers.openai.com/mcp"

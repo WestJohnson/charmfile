@@ -3,6 +3,21 @@
 Charmfile includes or adapts permissively licensed agent skills. The upstream
 projects are not affiliated with or responsible for Charmfile.
 
+## Microsoft Playwright CLI
+
+Source: <https://github.com/microsoft/playwright-cli>
+
+Charmfile adapts the upstream `playwright-cli` skill with a pinned installer,
+macOS-only platform boundary, and explicit separation between isolated
+automation and signed-in Chrome. The `playwright-live-chrome` wrapper adds a
+macOS Keychain handshake, explicit session naming, and live-account safety
+boundaries. The Chrome extension itself is not bundled.
+
+Playwright CLI is licensed under the Apache License 2.0, reproduced in this
+repository's `LICENSE`.
+
+Copyright (c) Microsoft Corporation
+
 ## Addy Osmani Agent Skills
 
 Source: <https://github.com/addyosmani/agent-skills>

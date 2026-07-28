@@ -1,0 +1,4 @@
+interface:
+  display_name: "Install Charmfile"
+  short_description: "Install and update Charmfile on macOS"
+  default_prompt: "Use $install-charmfile to inspect this Mac and install the full Charmfile Codex harness."

@@ -7,20 +7,31 @@ repo_root="$(cd "$script_dir/.." && pwd)"
 python3 "$repo_root/scripts/validate.py"
 
 bash -n "$repo_root/scripts/charmfile"
+bash -n "$repo_root/scripts/install-charmfile"
 bash -n "$repo_root/scripts/validate-release.sh"
 bash -n "$repo_root/scripts/build-release.sh"
 bash -n "$repo_root/tests/core-install.sh"
+bash -n "$repo_root/tests/browser-setup.sh"
+bash -n "$repo_root/tests/full-lifecycle.sh"
 bash -n "$repo_root/tests/marketplace-install.sh"
 bash -n "$repo_root/tests/secrets-helper.sh"
 bash -n "$repo_root/plugins/charmfile-core/skills/charmfile-setup/scripts/charmfile"
 bash -n "$repo_root/plugins/charmfile-core/skills/charmfile-setup/scripts/codex-secrets"
+bash -n "$repo_root/plugins/charmfile-browser/skills/browser-setup/scripts/charmfile-browser"
+sh -n "$repo_root/plugins/charmfile-browser/skills/browser-setup/scripts/playwright-cli-wrapper"
+zsh -n "$repo_root/plugins/charmfile-browser/skills/playwright-live-chrome/scripts/chrome-session.zsh"
+sh -n "$repo_root/plugins/charmfile-core/skills/charmfile-setup/assets/charmfile-codex"
+sh -n "$repo_root/plugins/charmfile-core/skills/charmfile-setup/assets/charmfile-launcher"
+sh -n "$repo_root/plugins/charmfile-core/skills/charmfile-setup/assets/zprofile.block.sh"
 python3 -m py_compile \
   "$repo_root/scripts/validate.py" \
   "$repo_root/plugins/charmfile-marketing/skills/dataforseo-api/scripts/dfs.py"
 
 "$repo_root/tests/core-install.sh"
+"$repo_root/tests/browser-setup.sh"
 "$repo_root/tests/marketplace-install.sh"
 "$repo_root/tests/secrets-helper.sh"
+"$repo_root/tests/full-lifecycle.sh"
 python3 \
   "$repo_root/plugins/charmfile-marketing/skills/dataforseo-api/scripts/dfs.py" \
   --help >/dev/null
@@ -51,7 +62,14 @@ fi
 if [ -f "$skill_validator" ]; then
   while IFS= read -r skill_file; do
     "${validator_python[@]}" "$skill_validator" "$(dirname "$skill_file")"
-  done < <(find "$repo_root/plugins" -path '*/skills/*/SKILL.md' -print | sort)
+  done < <(
+    find \
+      "$repo_root/plugins" \
+      "$repo_root/.agents/skills" \
+      -path '*/skills/*/SKILL.md' \
+      -print |
+      sort
+  )
 else
   printf '[note] official skill validator not found; repository validator completed\n'
 fi

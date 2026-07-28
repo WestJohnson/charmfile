@@ -29,6 +29,7 @@ EXPECTED_PLUGINS = {
 }
 
 REQUIRED_FILES = {
+    ".gitattributes",
     "INSTALL.md",
     "README.md",
     "AGENTS.md",

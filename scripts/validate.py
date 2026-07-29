@@ -15,7 +15,8 @@ ROOT = Path(__file__).resolve().parents[1]
 PLUGINS = ROOT / "plugins"
 MARKETPLACE = ROOT / ".agents" / "plugins" / "marketplace.json"
 INSTALL_SKILL = ROOT / ".agents" / "skills" / "install-charmfile"
-RELEASE_VERSION = "0.1.0-rc.3"
+RELEASE_VERSION = "0.1.0-rc.4"
+SIDECAR_VERSION = "0.6.1"
 
 EXPECTED_PLUGINS = {
     "charmfile-browser",
@@ -258,6 +259,20 @@ def validate_content() -> None:
 
     if any(path.name == ".env" for path in ROOT.rglob(".env")):
         fail("plaintext .env file found")
+
+    memory_contract = (
+        PLUGINS
+        / "charmfile-memory"
+        / "skills"
+        / "obsidian-sidecar-setup"
+        / "references"
+        / "install-contract.md"
+    ).read_text(encoding="utf-8")
+    if f"SIDECAR_VERSION={SIDECAR_VERSION}" not in memory_contract:
+        fail(
+            "memory install contract must pin the reviewed Sidecar "
+            f"{SIDECAR_VERSION} release"
+        )
 
     executable_paths = [
         ROOT / "scripts" / "install-charmfile",

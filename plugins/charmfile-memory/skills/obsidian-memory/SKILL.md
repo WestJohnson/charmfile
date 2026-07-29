@@ -79,4 +79,8 @@ obsidian-sidecar benchmark
 Treat a score below 80, any critical failure, a failed safety gate, or stale
 Basic Memory indexing as a real blocker. Formatting and index repairs may be
 automatic. Primary Codex must adjudicate substantive merges, replacements, or
-deletions.
+deletions. Do not treat `proposed`, `informational`, or `needs-review` decision
+records as required cleanup: Sidecar keeps them non-authoritative and excludes
+them from freshness penalties. High-confidence wording variants may reuse a
+canonical record automatically; ambiguous records remain isolated and
+searchable for optional later inspection.

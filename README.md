@@ -152,7 +152,7 @@ Raw transcripts, internal reasoning, complete tool output, and credentials do
 not belong in the vault. Vault selection and Sidecar activation remain a
 separate plan-and-approval phase.
 
-The exact Sidecar `0.6.0` wheel, checksums, rollback wheel, and update metadata
+The exact Sidecar `0.6.1` wheel, checksums, rollback wheel, and update metadata
 are published through the self-hosted Charmfile release channel; see
 [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md).
 
@@ -191,7 +191,7 @@ eight-pack installation, update behavior, and managed-file backups.
 
 ## Project status
 
-`0.1.0-rc.3` release candidate. The canonical Git repository, checksummed
+`0.1.0-rc.4` release candidate. The canonical Git repository, checksummed
 archives, policy documents, and Sidecar update channel are self-hosted at
 `ai.westhawaiimarketing.com`. GitHub remains a public mirror. Charmfile has not
 been submitted to the universal plugin directory.

@@ -1,6 +1,6 @@
 {
   "name": "charmfile-memory",
-  "version": "0.1.0-rc.3",
+  "version": "0.1.0-rc.4",
   "description": "Add sanitized, searchable Obsidian memory with long-thread checkpoints and health gates.",
   "author": {
     "name": "Charmfile contributors",
@@ -14,7 +14,7 @@
   "interface": {
     "displayName": "Charmfile Memory",
     "shortDescription": "Durable memory without raw transcript storage.",
-    "longDescription": "Set up and operate the optional Codex Obsidian Sidecar: sanitized durable notes, long-thread checkpoints, freshness envelopes, decision-impact previews, Basic Memory indexing, and scored health checks.",
+    "longDescription": "Set up and operate the optional Codex Obsidian Sidecar: sanitized durable notes, self-healing long-thread checkpoints, non-authoritative proposal quarantine, freshness envelopes, decision-impact previews, Basic Memory indexing, and scored health checks.",
     "developerName": "Charmfile contributors",
     "category": "Productivity",
     "capabilities": ["Read", "Write"],

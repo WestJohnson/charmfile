@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.1.0-rc.4 - 2026-07-28
+
+- Updated the optional memory pack to the checksum-verified Sidecar `0.6.1`
+  release.
+- Added deterministic long-thread recovery: saturated curator output discards
+  only the oldest checkpoint-only carry-forward items, never current-turn
+  evidence or canonical vault history.
+- Kept proposals, informational records, and ambiguous duplicate candidates
+  searchable but explicitly non-authoritative so they do not become freshness
+  failures or force users through a manual review backlog.
+- Added release guidance that distinguishes required health maintenance from
+  optional decision-inbox cleanup.
+
 ## 0.1.0-rc.3 - 2026-07-27
 
 - Made the West Hawaii HTTPS release channel canonical for Git, checksummed

@@ -27,6 +27,10 @@ files, or config when `obsidian-sidecar setup` can do so.
 9. In a fresh Codex session, have the user review and trust the Stop hook.
 10. Run `obsidian-sidecar benchmark` only after hook trust and live dependencies
     are available. Require at least 80 and every critical gate.
+11. Confirm `obsidian-sidecar freshness-status` reports proposals,
+    informational records, and ambiguous candidates as `non-authoritative`.
+    These records remain searchable and must not be mass-promoted or manually
+    cleared just to satisfy health.
 
 ## Optional Cloud Sync
 

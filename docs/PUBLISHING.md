@@ -50,7 +50,7 @@ Start a new conversation and test at least:
 
 ## Memory dependency
 
-Push the reviewed Sidecar commits and signed `v0.6.0` tag to the self-hosted
+Push the reviewed Sidecar commits and signed `v0.6.1` tag to the self-hosted
 bare repository, publish the versioned wheel, rollback wheel, checksums, and
 `index.json`, then verify update and rollback without PyPI before presenting
 `charmfile-memory` as generally available.

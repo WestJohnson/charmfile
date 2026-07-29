@@ -33,8 +33,14 @@ All managed notes require `title`, `type`, and
 - Use `session_id` for idempotency.
 - Preserve manual content outside sidecar marker blocks.
 - Auto-fix metadata, formatting, links, and generated indexes only.
+- Bound checkpoint carry-forward automatically, dropping only the oldest
+  `c1`-only working-set items while preserving current evidence and canonical
+  vault history.
 - Never auto-delete or semantically merge notes.
 - Quarantine invalid output and stop after three failed attempts.
+- Keep proposals, observations, and ambiguous duplicate candidates
+  non-authoritative; they are optional discovery records, not required
+  maintenance.
 
 ## Retrieval Quality
 

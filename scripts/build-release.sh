@@ -3,7 +3,7 @@ set -euo pipefail
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repo_root="$(cd "$script_dir/.." && pwd)"
-version="${1:-0.1.0-rc.3}"
+version="${1:-0.1.0-rc.4}"
 
 case "$version" in
   *[!0-9A-Za-z.-]*|'')

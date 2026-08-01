@@ -2,10 +2,11 @@
 
 **A small agent setup that works like magic.**
 
-Charmfile is a macOS-only, installable configuration for Codex. It gives the
-primary agent clear operating rules, verification habits, dependable
-Playwright automation, safe secret handling, optional durable memory, and
-focused specialist skills without adding a second agent runtime.
+Charmfile is a macOS-only, local-first Codex configuration and durable-memory
+system. It gives the primary agent clear operating rules, verification habits,
+safe secret handling, and human-visible project continuity without adding a
+second agent runtime. Users may extend Memory to a reviewed VPS or server, but
+no server is required.
 
 Charmfile is an independent community project. It is not affiliated with or
 endorsed by OpenAI.
@@ -23,18 +24,19 @@ project continuity  -> sanitized memory
 independent review  -> explicit subagent
 ```
 
-## Full setup
+## Product layers
 
 | Package | Contents |
 |---|---|
 | `charmfile-core` | Managed guidance, portable Codex profile, launchers, doctor, and optional Keychain helper |
-| `charmfile-browser` | Reproducible Playwright CLI plus explicit signed-in Chrome attachment |
-| `charmfile-memory` | Obsidian Sidecar setup and operation |
-| `charmfile-frontend` | Responsive, accessible, anti-generic frontend implementation and Chrome QA |
-| `charmfile-marketing` | Ads, analytics, cross-channel diagnosis, DataForSEO, and launch review |
-| `charmfile-research` | Source-backed technical and product research |
-| `charmfile-infrastructure` | VPS health, capacity, backup, and operations review |
-| `charmfile-threejs` | Ten focused Three.js skills loaded by topic |
+| `charmfile-memory` | Local durable-memory setup, retrieval, health, and optional cloud planning |
+| Optional packs | Browser, frontend, marketing, research, infrastructure, and Three.js capabilities |
+
+The default `standard` preset installs Core and Memory. Memory activation is a
+separate plan because it selects a private vault and installs the separately
+versioned Codex Obsidian Sidecar engine. Browser automation and specialist
+packs are explicit choices. See the [product contract](docs/PRODUCT_CONTRACT.md)
+and [pack catalog](docs/PACKS.md).
 
 Personal credentials, hostnames, account identifiers, vault content, fixed
 models, trusted-project lists, private MCP endpoints, unrestricted sandbox
@@ -60,11 +62,11 @@ cd charmfile
 Give Codex this reviewed checkout and say:
 
 ```text
-Use $install-charmfile to inspect this Mac and install the full Charmfile
-Codex harness. Show me the exact plan and wait for approval. Preserve my
+Use $install-charmfile to inspect this Mac and install the standard Charmfile
+Core and Memory configuration. Show me the exact plan and wait for approval. Preserve my
 existing config, plugins, projects, secrets, browser profile, and unrelated
-AGENTS.md guidance. After installation, run the full doctor and report
-isolated Playwright and signed-in Chrome readiness separately.
+AGENTS.md guidance. Do not activate a vault or cloud mode. After installation,
+run the Charmfile doctor and tell me how to plan local Memory activation.
 ```
 
 See [INSTALL.md](INSTALL.md). The deterministic path is:
@@ -75,12 +77,12 @@ See [INSTALL.md](INSTALL.md). The deterministic path is:
 ./scripts/install-charmfile doctor
 ```
 
-The installer registers the repository marketplace, installs all eight packs,
+The installer registers the repository marketplace, installs Core and Memory,
 adds one marked guidance block, installs the portable profile and launchers,
-adds one marked `~/.local/bin` PATH block, prepares Playwright, and runs the
-doctors. Existing compatible Playwright and secret helpers are preserved.
-Unmanaged files at Charmfile-owned targets block replacement instead of being
-overwritten.
+adds one marked `~/.local/bin` PATH block, and runs the selected-pack doctors.
+Use `--with-browser`, `--with PACK`, or `--preset full` for additional packs.
+Existing installations keep their selected packs during updates. Unmanaged
+files at Charmfile-owned targets block replacement instead of being overwritten.
 
 Open a new terminal and start a new Codex session after installation.
 
@@ -103,9 +105,9 @@ state.
 
 Normal `codex` remains unchanged. `charmfile-codex` opts into the profile.
 
-## Playwright, without browser ambiguity
+## Optional Playwright, without browser ambiguity
 
-`charmfile-browser` keeps two modes separate:
+When selected, `charmfile-browser` keeps two modes separate:
 
 - isolated Playwright for public sites, local previews, screenshots,
   responsive QA, and disposable browser tests;
@@ -139,9 +141,9 @@ healthy and no critical failures.
 A local marketplace uses the current checkout. Open a new terminal and start a
 new Codex session after every update.
 
-## Durable memory
+## Charmfile Memory
 
-`charmfile-memory` guides installation and operation of
+The default Memory pack guides installation and operation of
 [Codex Obsidian Sidecar](https://ai.westhawaiimarketing.com/charmfile/git/codex-obsidian-sidecar.git).
 The Sidecar:
 
@@ -160,12 +162,13 @@ The exact Sidecar `0.6.1` wheel, checksums, rollback wheel, and update metadata
 are published through the self-hosted Charmfile release channel; see
 [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md).
 
-Cloud operation is a second, opt-in phase. Charmfile never silently installs
+Memory activation is a second, opt-in phase. Cloud operation is a third phase.
+Charmfile never silently installs
 Syncthing, chooses a server, opens a port, or enables a paid model. The tested
 headless-worker topology uses a Syncthing filesystem replica, fenced writer
 leases, derived reports, versioned backups, and separate local/cloud health
-gates. See [Sidecar Cloud Sync](docs/SIDECAR_CLOUD_SYNC.md) for the user and
-LLM installation prompts.
+gates. See [Memory](docs/MEMORY.md), [Cloud](docs/CLOUD.md), and the advanced
+[Sidecar Cloud Sync](docs/SIDECAR_CLOUD_SYNC.md) contract.
 
 ## Secret handling
 
@@ -191,11 +194,12 @@ Contributors need Python 3.11 or newer in addition to the runtime requirements:
 The gate checks plugin and skill structure, marketplace consistency, personal
 path and credential leaks, excluded integration content, shell syntax,
 macOS-only boundaries, safe profile behavior, Playwright readiness states,
-eight-pack installation, update behavior, and managed-file backups.
+core, standard, browser, and full preset installation, selected-pack update
+preservation, and managed-file backups.
 
 ## Project status
 
-`0.1.0-rc.5` release candidate. The canonical Git repository, checksummed
+`0.1.0-rc.6` release candidate. The canonical Git repository, checksummed
 archives, policy documents, and Sidecar update channel are self-hosted at
 `ai.westhawaiimarketing.com`. GitHub remains a public mirror. Charmfile has not
 been submitted to the universal plugin directory.
@@ -203,6 +207,10 @@ been submitted to the universal plugin directory.
 See:
 
 - [Architecture](docs/ARCHITECTURE.md)
+- [Product contract](docs/PRODUCT_CONTRACT.md)
+- [Memory](docs/MEMORY.md)
+- [Cloud](docs/CLOUD.md)
+- [Pack catalog](docs/PACKS.md)
 - [Publishing](docs/PUBLISHING.md)
 - [Privacy](PRIVACY.md)
 - [Security](SECURITY.md)

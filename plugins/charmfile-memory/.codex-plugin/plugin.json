@@ -1,6 +1,6 @@
 {
   "name": "charmfile-memory",
-  "version": "0.1.0-rc.5",
+  "version": "0.1.0-rc.6",
   "description": "Add sanitized, searchable Obsidian memory with long-thread checkpoints and health gates.",
   "author": {
     "name": "Charmfile contributors",

@@ -11,11 +11,11 @@ cd charmfile
 Give Codex this repository and use:
 
 ```text
-Use $install-charmfile to inspect this Mac and install the full Charmfile
-Codex harness. Show me the exact plan and wait for approval. Preserve my
+Use $install-charmfile to inspect this Mac and install the standard Charmfile
+Core and Memory configuration. Show me the exact plan and wait for approval. Preserve my
 existing config, plugins, projects, secrets, browser profile, and unrelated
-AGENTS.md guidance. After installation, run the full doctor and report
-isolated Playwright and signed-in Chrome readiness separately.
+AGENTS.md guidance. Do not activate a vault or cloud mode. After installation,
+run the Charmfile doctor and tell me how to plan local Memory activation.
 ```
 
 The equivalent deterministic commands are:
@@ -25,6 +25,20 @@ The equivalent deterministic commands are:
 ./scripts/install-charmfile install --yes
 ./scripts/install-charmfile doctor
 ```
+
+The default `standard` preset installs Core and the Memory setup pack. Other
+supported selections are:
+
+```sh
+./scripts/install-charmfile plan --preset core
+./scripts/install-charmfile plan --with-browser
+./scripts/install-charmfile plan --with research
+./scripts/install-charmfile plan --preset full
+```
+
+Pass the same selection to `install --yes` after approving its plan. Updates
+preserve the currently installed Charmfile packs and do not accept a preset
+override.
 
 After a published Git-backed installation:
 
@@ -36,10 +50,10 @@ charmfile doctor --after-update
 
 Open a new terminal and start a new Codex session after an install or update.
 
-## Optional durable memory
+## Activate Charmfile Memory
 
-The full Charmfile install adds the memory skills but does not select a vault
-or activate Sidecar. Use a second plan-and-approval phase:
+The standard Charmfile install adds the Memory skills but does not select a
+vault or activate the Sidecar engine. Use a second plan-and-approval phase:
 
 ```text
 Use $obsidian-sidecar-setup to install local durable memory for Charmfile.
@@ -53,5 +67,6 @@ pass.
 
 Cloud sync and overnight maintenance are a third, separately approved phase.
 They are never enabled by the base installer. Read
+[Cloud](docs/CLOUD.md) and
 [Sidecar Cloud Sync](docs/SIDECAR_CLOUD_SYNC.md) for the mode choices, cloud
 preflight, copy-paste prompt, proof requirements, and recovery boundaries.

@@ -1,6 +1,6 @@
 {
   "name": "charmfile-core",
-  "version": "0.1.0-rc.5",
+  "version": "0.1.0-rc.6",
   "description": "Install a small, safe Codex operating configuration and lightweight workflow rules.",
   "author": {
     "name": "Charmfile contributors",

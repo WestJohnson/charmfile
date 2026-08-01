@@ -1,32 +1,44 @@
 ---
 name: install-charmfile
-description: Install, update, plan, or health-check the complete Charmfile Codex harness on macOS. Use when a user asks an agent to adopt Charmfile from this repository, refresh an existing Charmfile installation, inspect its dependencies, preserve an existing Codex configuration while adding the portable profile, or verify the Core, Browser, Memory, and specialist packs.
+description: Install, update, plan, select packs for, or health-check Charmfile on macOS. Use when a user asks an agent to adopt Charmfile from this repository, refresh an existing installation without expanding its pack set, inspect dependencies, preserve an existing Codex configuration, or choose between Core, standard Core plus Memory, Browser, and full presets.
 ---
 
 # Install Charmfile
 
-Use the repository lifecycle command as the control plane. The full install
-includes eight plugin packs, managed global guidance, a conservative Codex
-profile, macOS Keychain secret injection, and the Playwright browser setup.
+Use the repository lifecycle command as the control plane. The default
+`standard` install includes Core and the Memory setup pack, managed global
+guidance, a conservative Codex profile, and macOS Keychain secret injection.
+Browser automation and specialist packs are selected explicitly; the `full`
+preset retains the original eight-pack installation.
 
 ## Workflow
 
 1. Confirm the host is macOS and read
    [references/install-contract.md](references/install-contract.md).
 2. Run `./scripts/install-charmfile plan`.
-3. Show the user the exact targets, existing-state findings, dependencies,
-   browser modes, backup behavior, and any manual Chrome-extension step.
+3. Show the user the exact targets, selected preset and packs, existing-state
+   findings, dependencies, backup behavior, and any requested browser mode.
 4. Wait for explicit approval.
 5. Run `./scripts/install-charmfile install --yes`.
 6. Run `./scripts/install-charmfile doctor`.
-7. Report isolated Playwright readiness and signed-in Chrome readiness
-   separately.
+7. When Browser was selected, report isolated Playwright readiness and
+   signed-in Chrome readiness separately.
 8. Open a new terminal and start a new Codex session so the managed PATH and
    newly installed or updated plugins are loaded.
-9. If the user requests durable memory, start
-   `$obsidian-sidecar-setup` as a separate local plan. Cloud sync or overnight
-   maintenance is a third, explicitly requested phase governed by that skill's
-   cloud-sync contract.
+9. Explain that the installed Memory pack makes `$obsidian-sidecar-setup`
+   available but does not activate a vault. Start that separate local plan only
+   when requested. Cloud sync or overnight maintenance is a third, explicitly
+   requested phase governed by that skill's cloud-sync contract.
+
+Selection examples:
+
+```sh
+./scripts/install-charmfile plan                    # Core + Memory
+./scripts/install-charmfile plan --preset core      # Core only
+./scripts/install-charmfile plan --with-browser     # Core + Memory + Browser
+./scripts/install-charmfile plan --with research    # Core + Memory + Research
+./scripts/install-charmfile plan --preset full      # all eight packs
+```
 
 For an existing installation:
 
@@ -52,6 +64,9 @@ charmfile doctor
   and let the user approve it in Chrome.
 - Do not claim signed-in Chrome readiness merely because isolated Playwright
   works.
+- Updates preserve the currently installed Charmfile packs. Do not add a
+  preset override to `update` or present an update as permission to expand the
+  installation.
 - Do not automatically configure an Obsidian vault. Use
   `$obsidian-sidecar-setup` as a second plan-and-approval phase when requested.
 - Do not install Syncthing, choose a cloud host, open a port, or enable a model

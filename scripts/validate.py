@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 PLUGINS = ROOT / "plugins"
 MARKETPLACE = ROOT / ".agents" / "plugins" / "marketplace.json"
 INSTALL_SKILL = ROOT / ".agents" / "skills" / "install-charmfile"
-RELEASE_VERSION = "0.1.0-rc.5"
+RELEASE_VERSION = "0.1.0-rc.6"
 SIDECAR_VERSION = "0.6.1"
 
 EXPECTED_PLUGINS = {
@@ -43,6 +43,10 @@ REQUIRED_FILES = {
     "CHANGELOG.md",
     "THIRD_PARTY_NOTICES.md",
     "RELEASE_CHECKLIST.md",
+    "docs/PRODUCT_CONTRACT.md",
+    "docs/MEMORY.md",
+    "docs/CLOUD.md",
+    "docs/PACKS.md",
     "docs/SIDECAR_CLOUD_SYNC.md",
     "plugins/charmfile-memory/skills/obsidian-sidecar-setup/references/cloud-sync-contract.md",
 }

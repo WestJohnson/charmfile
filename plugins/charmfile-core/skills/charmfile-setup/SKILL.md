@@ -66,5 +66,6 @@ scripts/charmfile doctor --scope repo --repo /path/to/repository
 - Do not install a model choice, unrestricted sandbox, or no-approval policy.
 - Do not request or print secret values. Prefer
   `codex-secrets run NAME... -- COMMAND`.
-- Do not claim that optional memory or specialist packs are installed merely
-  because Charmfile Core is healthy.
+- Do not claim that the Sidecar runtime, a vault, cloud mode, or specialist
+  packs are active merely because Charmfile Core or the Memory setup pack is
+  healthy.

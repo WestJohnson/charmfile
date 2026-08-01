@@ -34,7 +34,9 @@ Before a public announcement:
 ```sh
 ./scripts/install-charmfile plan
 ./scripts/install-charmfile install --yes
-./scripts/install-charmfile doctor --require-live-chrome
+./scripts/install-charmfile doctor
+./scripts/install-charmfile plan --with-browser
+./scripts/install-charmfile plan --preset full
 ```
 
 Start a new conversation and test at least:
@@ -44,7 +46,9 @@ Start a new conversation and test at least:
 - update of an existing managed block;
 - preservation of compatible external helpers;
 - rejection of unmanaged conflicting targets;
-- isolated Playwright and signed-in Chrome as separate states;
+- Core, standard, Browser, and full preset selection;
+- isolated Playwright and signed-in Chrome as separate states when Browser is selected;
+- preservation of the installed pack set across an update;
 - Git-backed `charmfile update --yes`;
 - backup restoration;
 - one representative prompt per optional pack.

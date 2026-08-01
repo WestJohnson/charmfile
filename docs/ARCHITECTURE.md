@@ -1,7 +1,7 @@
 # Architecture
 
-Charmfile is a macOS-only marketplace of small skills-first plugins, not an
-agent runtime.
+Charmfile is a macOS-only, local-first configuration and durable-memory
+product assembled from small skills-first plugins. It is not an agent runtime.
 
 ## Authority
 
@@ -22,12 +22,17 @@ The portable profile is a named Codex layer selected through
 `charmfile-codex`. It overlays the user's base configuration without mutating
 it.
 
-## Plugin boundaries
+## Product boundaries
 
-- `charmfile-core` is useful by itself.
-- Specialist packs do not require memory.
-- The memory pack guides installation of the separately versioned Obsidian
-  Sidecar rather than hiding it inside Core.
+- The default installation is Core plus Memory; Core remains useful by itself.
+- Installing the Memory pack exposes a setup workflow but does not select a
+  vault, install Sidecar, or enable a hook.
+- The separately versioned Obsidian Sidecar is the engine behind Charmfile
+  Memory rather than a second user-facing product layer.
+- Browser and specialist capability packs remain independently selectable and
+  do not require Memory.
+- Updates preserve the installed Charmfile pack set instead of expanding every
+  user to the complete marketplace.
 - Local memory, vault replication, and overnight cloud maintenance are three
   separate approval boundaries. Charmfile configures none of them silently.
 - The supported headless cloud pattern uses a normal Syncthing Markdown
@@ -37,6 +42,9 @@ it.
   separate from explicit signed-in Chrome attachment.
 - The marketplace bundles no MCP runtime and requests no authentication. The
   optional profile registers only the public OpenAI documentation MCP.
+
+See [Product Contract](PRODUCT_CONTRACT.md) for the normative layer and release
+boundaries.
 
 ## Safety boundaries
 

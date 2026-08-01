@@ -12,12 +12,13 @@ die() {
 usage() {
   printf '%s\n' \
     "Usage:" \
-    "  install-charmfile plan [--source PATH_OR_GIT]" \
-    "  install-charmfile install [--source PATH_OR_GIT] --yes" \
+    "  install-charmfile plan [--source PATH_OR_GIT] [--preset core|standard|full] [--with-browser] [--with PACK]" \
+    "  install-charmfile install [--source PATH_OR_GIT] [--preset core|standard|full] [--with-browser] [--with PACK] --yes" \
     "  install-charmfile update --yes" \
     "  install-charmfile doctor [--require-live-chrome] [--after-update]" \
     "" \
-    "The default source is the repository containing this command."
+    "The default preset is standard: Charmfile Core plus Charmfile Memory." \
+    "Memory activation, browser automation, specialist packs, and cloud mode remain separate choices."
 }
 
 require_macos() {
@@ -28,6 +29,17 @@ require_macos() {
 require_command() {
   command -v "$1" >/dev/null 2>&1 ||
     die "required command is unavailable: $1"
+}
+
+ensure_jq() {
+  if command -v jq >/dev/null 2>&1; then
+    return
+  fi
+  command -v brew >/dev/null 2>&1 ||
+    die "jq is missing and Homebrew is unavailable"
+  printf 'Installing required JSON helper: jq\n'
+  brew install jq
+  require_command jq
 }
 
 core_script() {
@@ -57,14 +69,105 @@ marketplace_source_type() {
 }
 
 plugin_names() {
-  root="$1"
-  manifest="$root/.agents/plugins/marketplace.json"
+  local root="$1"
+  local manifest="$root/.agents/plugins/marketplace.json"
   [ -f "$manifest" ] || die "marketplace manifest is missing: $manifest"
   if command -v jq >/dev/null 2>&1; then
     jq -r '.plugins[].name' "$manifest"
   else
     find "$root/plugins" -mindepth 1 -maxdepth 1 -type d -exec basename {} \; |
       sort
+  fi
+}
+
+selected_plugins=("")
+
+plugin_selected() {
+  local expected="$1"
+  local selected
+  for selected in "${selected_plugins[@]}"; do
+    [ "$selected" = "$expected" ] && return 0
+  done
+  return 1
+}
+
+append_selected_plugin() {
+  local plugin_name="$1"
+  [ -n "$plugin_name" ] || return
+  if ! plugin_selected "$plugin_name"; then
+    selected_plugins+=("$plugin_name")
+  fi
+}
+
+normalize_plugin_name() {
+  case "$1" in
+    charmfile-*) printf '%s\n' "$1" ;;
+    *) printf 'charmfile-%s\n' "$1" ;;
+  esac
+}
+
+plugin_exists() {
+  local root="$1"
+  local expected="$2"
+  plugin_names "$root" | grep -Fxq "$expected"
+}
+
+resolve_requested_plugins() {
+  local root="$1"
+  local plugin_name
+  selected_plugins=("")
+  case "$preset" in
+    core)
+      append_selected_plugin charmfile-core
+      ;;
+    standard)
+      append_selected_plugin charmfile-core
+      append_selected_plugin charmfile-memory
+      ;;
+    full)
+      while IFS= read -r plugin_name; do
+        [ -n "$plugin_name" ] || continue
+        append_selected_plugin "$plugin_name"
+      done < <(plugin_names "$root")
+      ;;
+    *)
+      die "unknown preset: $preset"
+      ;;
+  esac
+  if [ "$with_browser" = "true" ]; then
+    append_selected_plugin charmfile-browser
+  fi
+  for plugin_name in "${additional_plugins[@]}"; do
+    [ -n "$plugin_name" ] || continue
+    append_selected_plugin "$plugin_name"
+  done
+  for plugin_name in "${selected_plugins[@]}"; do
+    [ -n "$plugin_name" ] || continue
+    plugin_exists "$root" "$plugin_name" ||
+      die "selected pack is not in this marketplace: $plugin_name"
+  done
+}
+
+resolve_installed_plugins() {
+  local root="$1"
+  local require_core="${2:-false}"
+  local installed_json plugin_name
+  installed_json="$(codex plugin list --json)"
+  selected_plugins=("")
+  while IFS= read -r plugin_name; do
+    [ -n "$plugin_name" ] || continue
+    if printf '%s\n' "$installed_json" |
+      jq -e --arg id "$plugin_name@charmfile" '
+        any(.installed[];
+          .pluginId == $id and .installed == true
+        )
+      ' >/dev/null; then
+      append_selected_plugin "$plugin_name"
+    fi
+  done < <(plugin_names "$root")
+  if [ "$require_core" = "true" ] &&
+    ! plugin_selected charmfile-core; then
+    die "Charmfile Core is not installed; run install before update"
   fi
 }
 
@@ -75,31 +178,49 @@ prepare_codex_home() {
 }
 
 show_plan() {
-  root="$1"
-  mode="$2"
+  local root="$1"
+  local mode="$2"
+  local core browser plugin_name
   core="$(core_script "$root")"
-  browser="$(browser_script "$root")"
   [ -x "$core" ] || die "Core setup command is missing: $core"
-  [ -x "$browser" ] || die "Browser setup command is missing: $browser"
 
-  printf 'Charmfile full-install plan\n'
+  printf 'Charmfile install plan\n'
   printf '  operation: %s\n' "$mode"
   printf '  platform: macOS only\n'
   printf '  marketplace source: %s\n' "$marketplace_source"
-  printf '  plugin packs:\n'
-  while IFS= read -r plugin_name; do
+  if [ "$mode" = "update" ]; then
+    printf '  pack selection: preserve currently installed Charmfile packs\n'
+  else
+    printf '  preset: %s\n' "$preset"
+  fi
+  printf '  selected packs:\n'
+  for plugin_name in "${selected_plugins[@]}"; do
     [ -n "$plugin_name" ] || continue
     printf '    - %s\n' "$plugin_name"
-  done < <(plugin_names "$root")
+  done
   printf '  plugin behavior: install or refresh; unrelated plugins unchanged\n'
+  if command -v jq >/dev/null 2>&1; then
+    printf '  JSON helper: keep existing jq\n'
+  else
+    printf '  JSON helper: install jq with Homebrew after approval\n'
+  fi
+  printf '  memory runtime: available through the memory pack; vault activation remains separately approved\n'
+  printf '  cloud mode: not configured by this operation\n'
   printf '  new terminal and Codex session required after apply\n'
   "$core" plan --scope user --with-path --with-profile --with-secrets
-  "$browser" plan
+  if plugin_selected charmfile-browser; then
+    browser="$(browser_script "$root")"
+    [ -x "$browser" ] || die "Browser setup command is missing: $browser"
+    "$browser" plan
+  else
+    printf '  browser automation: not selected\n'
+  fi
 }
 
 install_plugins() {
-  root="$1"
-  while IFS= read -r plugin_name; do
+  local root="$1"
+  local plugin_name plugin_json
+  for plugin_name in "${selected_plugins[@]}"; do
     [ -n "$plugin_name" ] || continue
     printf 'Installing plugin: %s@charmfile\n' "$plugin_name"
     plugin_json="$(codex plugin add "$plugin_name@charmfile" --json)" ||
@@ -109,14 +230,17 @@ install_plugins() {
         >/dev/null; then
       die "Codex did not confirm installation of $plugin_name@charmfile"
     fi
-  done < <(plugin_names "$root")
+  done
 }
 
 apply_managed_setup() {
-  root="$1"
+  local root="$1"
+  local core browser
   core="$(core_script "$root")"
-  browser="$(browser_script "$root")"
-  "$browser" install --yes
+  if plugin_selected charmfile-browser; then
+    browser="$(browser_script "$root")"
+    "$browser" install --yes
+  fi
   install_plugins "$root"
   "$core" install \
     --scope user \
@@ -127,31 +251,45 @@ apply_managed_setup() {
 }
 
 doctor() {
+  local root core browser installed_json plugin_name sidecar_report sidecar_score
+  local browser_args
+  local failures plugin_failures
   root="$(marketplace_root)"
   [ -n "$root" ] || die "the charmfile marketplace is not registered"
   core="$(core_script "$root")"
-  browser="$(browser_script "$root")"
   failures=0
+  resolve_installed_plugins "$root"
 
-  printf 'Charmfile full doctor\n'
-  if ! "$core" doctor \
-    --scope user \
-    --with-path \
-    --with-profile \
-    --with-secrets; then
+  printf 'Charmfile doctor\n'
+  if ! plugin_selected charmfile-core; then
+    printf '  [fail] Plugin is missing: charmfile-core\n'
     failures=$((failures + 1))
+  elif ! "$core" doctor \
+      --scope user \
+      --with-path \
+      --with-profile \
+      --with-secrets; then
+      failures=$((failures + 1))
   fi
-  browser_args=(doctor)
-  if [ "$require_live_chrome" = "true" ]; then
-    browser_args+=(--require-live-chrome)
-  fi
-  if ! "$browser" "${browser_args[@]}"; then
+  if plugin_selected charmfile-browser; then
+    browser="$(browser_script "$root")"
+    browser_args=(doctor)
+    if [ "$require_live_chrome" = "true" ]; then
+      browser_args+=(--require-live-chrome)
+    fi
+    if ! "$browser" "${browser_args[@]}"; then
+      failures=$((failures + 1))
+    fi
+  elif [ "$require_live_chrome" = "true" ]; then
+    printf '  [fail] Live Chrome was required but charmfile-browser is not installed\n'
     failures=$((failures + 1))
+  else
+    printf '  [note] Browser pack is not installed\n'
   fi
 
   installed_json="$(codex plugin list --json)"
   plugin_failures=0
-  while IFS= read -r plugin_name; do
+  for plugin_name in "${selected_plugins[@]}"; do
     [ -n "$plugin_name" ] || continue
     if printf '%s\n' "$installed_json" |
       jq -e --arg id "$plugin_name@charmfile" '
@@ -164,7 +302,7 @@ doctor() {
       printf '  [fail] Plugin is missing or disabled: %s\n' "$plugin_name"
       plugin_failures=$((plugin_failures + 1))
     fi
-  done < <(plugin_names "$root")
+  done
   if [ "$plugin_failures" -gt 0 ]; then
     failures=$((failures + plugin_failures))
   fi
@@ -191,21 +329,25 @@ doctor() {
             (.basic_memory // "") == "ok"
           ' >/dev/null; then
         sidecar_score="$(printf '%s\n' "$sidecar_report" | jq -r '.score')"
-        printf '  [ok] Optional Obsidian Sidecar: score %s\n' "$sidecar_score"
+        printf '  [ok] Charmfile Memory engine: Sidecar score %s\n' "$sidecar_score"
       else
         printf '  [fail] Obsidian Sidecar health gate failed\n'
         failures=$((failures + 1))
       fi
     else
-      printf '  [note] Optional Obsidian Sidecar is not installed\n'
+      if plugin_selected charmfile-memory; then
+        printf '  [note] Charmfile Memory pack is installed; Sidecar activation is pending\n'
+      else
+        printf '  [note] Charmfile Memory is not installed\n'
+      fi
     fi
   fi
 
   if [ "$failures" -gt 0 ]; then
-    printf 'Full result: %s required check(s) failed\n' "$failures"
+    printf 'Charmfile result: %s required check(s) failed\n' "$failures"
     return 1
   fi
-  printf 'Full result: healthy\n'
+  printf 'Charmfile result: healthy\n'
   if [ "$after_update" = "true" ]; then
     printf 'Post-update result: healthy\n'
   fi
@@ -220,11 +362,32 @@ approved="false"
 require_live_chrome="false"
 after_update="false"
 marketplace_source="$repo_root"
+preset="standard"
+with_browser="false"
+selection_options_set="false"
+additional_plugins=("")
 while [ "$#" -gt 0 ]; do
   case "$1" in
     --source)
       [ "$#" -ge 2 ] || die "--source requires a local path or Git source"
       marketplace_source="$2"
+      shift 2
+      ;;
+    --preset)
+      [ "$#" -ge 2 ] || die "--preset requires core, standard, or full"
+      preset="$2"
+      selection_options_set="true"
+      shift 2
+      ;;
+    --with-browser)
+      with_browser="true"
+      selection_options_set="true"
+      shift
+      ;;
+    --with)
+      [ "$#" -ge 2 ] || die "--with requires a Charmfile pack name"
+      additional_plugins+=("$(normalize_plugin_name "$2")")
+      selection_options_set="true"
       shift 2
       ;;
     --yes)
@@ -253,6 +416,7 @@ require_macos
 
 case "$command_name" in
   plan)
+    resolve_requested_plugins "$repo_root"
     show_plan "$repo_root" plan
     ;;
   install)
@@ -260,11 +424,9 @@ case "$command_name" in
       die "install requires --yes after the plan is approved"
     require_command codex
     require_command git
+    resolve_requested_plugins "$repo_root"
     show_plan "$repo_root" install
-    if ! command -v jq >/dev/null 2>&1; then
-      initial_browser="$(browser_script "$repo_root")"
-      "$initial_browser" install --yes
-    fi
+    ensure_jq
     prepare_codex_home
     marketplace_json="$(
       codex plugin marketplace add "$marketplace_source" --json
@@ -281,6 +443,8 @@ case "$command_name" in
     printf 'Open a new terminal, then start a new Codex session to load the PATH and plugins.\n'
     ;;
   update)
+    [ "$selection_options_set" = "false" ] ||
+      die "update preserves installed packs and does not accept selection options"
     [ "$approved" = "true" ] ||
       die "update requires --yes after the plan is approved"
     require_command codex
@@ -290,6 +454,7 @@ case "$command_name" in
     [ -n "$current_root" ] ||
       die "the charmfile marketplace is not registered"
     marketplace_source="$current_root"
+    resolve_installed_plugins "$current_root" true
     show_plan "$current_root" update
     source_type="$(marketplace_source_type)"
     if [ "$source_type" = "git" ]; then
@@ -300,12 +465,19 @@ case "$command_name" in
     refreshed_root="$(marketplace_root)"
     [ -n "$refreshed_root" ] ||
       die "the refreshed charmfile marketplace is unavailable"
+    for selected_plugin in "${selected_plugins[@]}"; do
+      [ -n "$selected_plugin" ] || continue
+      plugin_exists "$refreshed_root" "$selected_plugin" ||
+        die "installed pack is missing from the refreshed marketplace: $selected_plugin"
+    done
     apply_managed_setup "$refreshed_root"
     after_update="true"
     doctor
     printf 'Open a new terminal, then start a new Codex session to load the PATH and plugins.\n'
     ;;
   doctor)
+    [ "$selection_options_set" = "false" ] ||
+      die "doctor inspects installed packs and does not accept selection options"
     require_command codex
     require_command jq
     doctor

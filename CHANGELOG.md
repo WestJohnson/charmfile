@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.1.0-rc.6 - 2026-08-01
+
+- Consolidated the product contract around lightweight Core configuration,
+  default durable-memory capability, and optional user-owned cloud operation.
+- Changed new installs to the `standard` Core plus Memory preset while keeping
+  `core`, `--with-browser`, individual `--with PACK`, and the original
+  eight-pack `full` selection available.
+- Changed updates to preserve the currently installed Charmfile pack set
+  instead of expanding every installation to the complete marketplace.
+- Changed the doctor to validate the installed pack set and report Browser and
+  Sidecar activation independently.
+- Added product, Memory, Cloud, and capability-pack documentation with the
+  Sidecar positioned as the separately versioned Charmfile Memory engine.
+- Added isolated lifecycle coverage for core, standard, browser, and full
+  installs, update preservation, invalid selections, and Sidecar health gates.
+
 ## 0.1.0-rc.5 - 2026-08-01
 
 - Added `charmfile doctor --after-update`, which validates the effective stable

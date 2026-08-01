@@ -1,5 +1,9 @@
 # Sidecar Cloud Sync
 
+This is the advanced operator contract for Charmfile Cloud. Start with the
+short [Cloud overview](CLOUD.md) and use this document when planning or
+verifying a real server deployment.
+
 Charmfile treats durable memory and cloud operation as separate, opt-in
 phases. A normal Charmfile installation adds the memory skills, but it does
 not choose a vault, install the Sidecar runtime, configure Syncthing, connect
@@ -28,7 +32,7 @@ without inventing a private host layout.
 
 ## Release Gate
 
-The Charmfile `0.1.0-rc.5` source includes the memory skills. Runtime
+The Charmfile `0.1.0-rc.6` source includes the memory skills. Runtime
 installation resolves the published, checksum-verified Sidecar `0.6.1` release
 from the self-hosted Charmfile HTTPS channel. An installer must:
 

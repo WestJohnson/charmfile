@@ -2,18 +2,20 @@
 
 ## Managed surfaces
 
-The full installer may manage only these surfaces after an approved plan:
+The installer may manage only these surfaces after an approved plan:
 
 - the `charmfile` Codex plugin marketplace;
-- the eight Charmfile plugin installations;
+- the Charmfile plugin installations selected by the approved preset or pack
+  flags;
 - one marked block in `~/.codex/AGENTS.md`;
 - one marked PATH block in `~/.zprofile`;
 - `~/.codex/charmfile.config.toml`;
 - `~/.local/bin/charmfile`;
 - `~/.local/bin/charmfile-codex`;
 - `~/.local/bin/codex-secrets`;
-- `~/.local/share/charmfile/playwright-cli`;
-- `~/.local/bin/playwright-cli` only when absent or already Charmfile-managed.
+- `~/.local/share/charmfile/playwright-cli` only when Browser is selected;
+- `~/.local/bin/playwright-cli` only when Browser is selected and the target is
+  absent or already Charmfile-managed.
 
 Existing managed files receive adjacent timestamped backups before a changed
 replacement. An unmanaged file at a Charmfile-owned target blocks that part of
@@ -24,11 +26,10 @@ the install instead of being overwritten.
 - macOS;
 - Codex CLI with plugin support;
 - Git;
-- Homebrew when Node.js, jq, or Google Chrome must be installed;
-- Node.js 18 or newer and npm;
+- Homebrew when jq or a selected pack dependency must be installed;
 - jq;
-- Google Chrome;
-- `@playwright/cli`, installed into a Charmfile-owned npm prefix.
+- Google Chrome, Node.js 18 or newer, npm, and `@playwright/cli` only when the
+  Browser pack is selected.
 
 The official Playwright Extension is a manual Chrome install. Its absence does
 not prevent isolated browser automation, but signed-in live Chrome remains
@@ -53,10 +54,11 @@ desktop-app-only settings.
 
 ## Update
 
-`charmfile update --yes` refreshes a Git-backed marketplace, reinstalls the
-packs declared by the refreshed marketplace, replaces only managed files, and
-runs the doctors. A local marketplace is treated as already refreshed; update
-uses its current checkout.
+`charmfile update --yes` records the currently installed Charmfile pack set,
+refreshes a Git-backed marketplace, reinstalls only that pack set, replaces
+only managed files, and runs the applicable doctors. A local marketplace is
+treated as already refreshed; update uses its current checkout. Updates reject
+preset overrides.
 
 Plugin changes are loaded only in a new Codex session.
 

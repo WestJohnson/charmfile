@@ -35,15 +35,22 @@ separate from the local-memory release gate.
 - [x] Updates preserve each isolated installation's exact pack count.
 - [x] Existing rc.5 full installation updates without losing any pack.
 - [x] Sidecar health below 80 fails the strict post-update gate.
-- [ ] The rc.6 archive is built from a clean tagged commit and passes checksum,
+- [x] The rc.6 archive is built from a clean tagged commit and passes checksum,
       secret, personal-path, and excluded-integration scans.
 
 ## Publication
 
-- [ ] Push the reviewed Charmfile commit and `v0.1.0-rc.6` tag to the canonical
+- [x] Push the reviewed Charmfile commit and `v0.1.0-rc.6` tag to the canonical
       self-hosted Git repository and GitHub mirror.
-- [ ] Publish the immutable rc.6 archive and checksums before updating the
+- [x] Publish the immutable rc.6 archive and checksums before updating the
       mutable Charmfile release index.
-- [ ] Update the production release site through a timestamped rollback bundle.
-- [ ] Verify homepage, docs, policies, Git refs, archive, checksum, standard
+- [x] Update the production release site through a timestamped rollback bundle.
+- [x] Verify homepage, docs, policies, Git refs, archive, checksum, standard
       install, full-install update preservation, and rollback inputs over HTTPS.
+
+Release evidence: signed tag `v0.1.0-rc.6` resolves to `3d06730`; the published
+archive SHA-256 is `1173c34fdcb97abd41889fedbca9bf9e6b36d9b462cba4346c2cab24203850f2`.
+A clean live Git-backed standard installation selected exactly Core and Memory;
+a live Git-backed full installation and managed update preserved all eight
+packs. Production uses the rc.6 site bundle with rollback inputs at
+`/root/charmfile-deploy-backups/20260801T202309Z-charmfile-rc6`.

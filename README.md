@@ -94,9 +94,10 @@ charmfile-codex
 ```
 
 The profile carries the portable parts of the original setup: safe approval
-and sandbox defaults, live search, useful TUI notifications and status items,
-Codex memory controls, a four-thread concurrency ceiling, and the public
-OpenAI developer documentation MCP. It intentionally omits the model,
+and sandbox defaults, live search, pragmatic communication, useful TUI
+notifications and status items including the current Git branch, Codex memory
+controls, reviewed stable workflow features, a four-thread concurrency
+ceiling, and the public OpenAI developer documentation MCP. It intentionally omits the model,
 entitlements, projects, machine paths, private tools, credentials, and plugin
 state.
 
@@ -127,11 +128,14 @@ After the public Git marketplace is installed:
 ```sh
 charmfile plan
 charmfile update --yes
-charmfile doctor
+charmfile doctor --after-update
 ```
 
 The update refreshes a Git-backed marketplace, reinstalls the packs declared
-by the new release, updates only managed files, and reruns the health checks.
+by the new release, updates only managed files, and reruns strict post-update
+health checks. That gate validates the reviewed Codex feature set and, when
+Sidecar is installed, requires a Sidecar score of at least 80 with Basic Memory
+healthy and no critical failures.
 A local marketplace uses the current checkout. Open a new terminal and start a
 new Codex session after every update.
 
@@ -191,7 +195,7 @@ eight-pack installation, update behavior, and managed-file backups.
 
 ## Project status
 
-`0.1.0-rc.4` release candidate. The canonical Git repository, checksummed
+`0.1.0-rc.5` release candidate. The canonical Git repository, checksummed
 archives, policy documents, and Sidecar update channel are self-hosted at
 `ai.westhawaiimarketing.com`. GitHub remains a public mirror. Charmfile has not
 been submitted to the universal plugin directory.

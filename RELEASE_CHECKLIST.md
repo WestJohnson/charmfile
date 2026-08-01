@@ -1,4 +1,4 @@
-# Charmfile 0.1.0-rc.4 Release Checklist
+# Charmfile 0.1.0-rc.5 Release Checklist
 
 ## Sidecar 0.6.1 dependency
 
@@ -40,9 +40,9 @@
 - [ ] Publish immutable Sidecar `0.6.1` artifacts and checksums before replacing
       the mutable release index.
 - [ ] Push the same Sidecar commit and tag to the GitHub mirror.
-- [ ] Push reviewed Charmfile commit and signed `v0.1.0-rc.4` tag to the
+- [ ] Push reviewed Charmfile commit and signed `v0.1.0-rc.5` tag to the
       canonical self-hosted Git repository and GitHub mirror.
-- [ ] Publish the Charmfile rc.4 archive and checksums before replacing its
+- [ ] Publish the Charmfile rc.5 archive and checksums before replacing its
       mutable index.
 - [ ] Update the production release tree through a timestamped rollback bundle,
       run `nginx -t`, and reload only after it passes.

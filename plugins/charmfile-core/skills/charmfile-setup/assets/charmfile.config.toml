@@ -6,6 +6,7 @@
 approval_policy = "on-request"
 sandbox_mode = "workspace-write"
 web_search = "live"
+personality = "pragmatic"
 
 [tui]
 notifications = true
@@ -13,6 +14,7 @@ notification_condition = "always"
 status_line = [
   "model-with-reasoning",
   "current-dir",
+  "git-branch",
   "context-remaining",
   "five-hour-limit",
   "weekly-limit",
@@ -21,8 +23,13 @@ status_line = [
 ]
 
 [features]
+goals = true
 hooks = true
 memories = true
+multi_agent = true
+personality = true
+plugins = true
+unified_exec = true
 
 [memories]
 generate_memories = true

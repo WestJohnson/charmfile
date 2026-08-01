@@ -1,6 +1,6 @@
 {
   "name": "charmfile-browser",
-  "version": "0.1.0-rc.4",
+  "version": "0.1.0-rc.5",
   "description": "Install and operate reproducible Playwright automation with an explicit signed-in Chrome path.",
   "author": {
     "name": "Charmfile contributors",

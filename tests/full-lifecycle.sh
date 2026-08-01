@@ -39,6 +39,12 @@ case "${1:-}" in
 esac
 EOF
 chmod 755 "$test_home/.local/bin/playwright-cli"
+cat > "$test_home/.local/bin/obsidian-sidecar" <<'EOF'
+#!/bin/sh
+score="${CHARMFILE_TEST_SIDECAR_SCORE:-95}"
+printf '{"critical_failures":0,"score":%s,"basic_memory":"ok"}\n' "$score"
+EOF
+chmod 755 "$test_home/.local/bin/obsidian-sidecar"
 
 export HOME="$test_home"
 export CODEX_HOME="$test_home/.codex"
@@ -77,5 +83,16 @@ grep -Fq 'codex-cli' "$test_root/profile-version.txt"
 grep -Fq 'Local marketplace: using the current checkout' \
   "$test_root/update.txt"
 grep -Fq 'Full result: healthy' "$test_root/update.txt"
+grep -Fq 'Post-update result: healthy' "$test_root/update.txt"
+grep -Fq 'Optional Obsidian Sidecar: score 95' "$test_root/update.txt"
+
+if CHARMFILE_TEST_SIDECAR_SCORE=79 \
+  "$test_home/.local/bin/charmfile" doctor --after-update \
+    > "$test_root/unhealthy-sidecar.txt" 2>&1; then
+  printf 'post-update doctor accepted an unhealthy Sidecar score\n' >&2
+  exit 1
+fi
+grep -Fq 'Obsidian Sidecar health gate failed' \
+  "$test_root/unhealthy-sidecar.txt"
 
 printf '[ok] full macOS plan, approval, eight-pack install, profile, Playwright preservation, launcher, doctor, and local update\n'

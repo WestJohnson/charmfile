@@ -31,7 +31,7 @@ After a published Git-backed installation:
 ```sh
 charmfile plan
 charmfile update --yes
-charmfile doctor
+charmfile doctor --after-update
 ```
 
 Open a new terminal and start a new Codex session after an install or update.

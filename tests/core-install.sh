@@ -85,6 +85,12 @@ profile="$test_home/.codex/charmfile.config.toml"
 test -f "$profile"
 grep -Fq 'approval_policy = "on-request"' "$profile"
 grep -Fq 'sandbox_mode = "workspace-write"' "$profile"
+grep -Fq 'personality = "pragmatic"' "$profile"
+grep -Fq '"git-branch"' "$profile"
+grep -Fq 'goals = true' "$profile"
+grep -Fq 'multi_agent = true' "$profile"
+grep -Fq 'plugins = true' "$profile"
+grep -Fq 'unified_exec = true' "$profile"
 grep -Fq '[mcp_servers.openaiDeveloperDocs]' "$profile"
 if grep -Eq 'danger-full-access|approval_policy = "never"|model = ' "$profile"; then
   printf 'portable profile contains a non-portable or unsafe value\n' >&2

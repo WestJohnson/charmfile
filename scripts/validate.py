@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 PLUGINS = ROOT / "plugins"
 MARKETPLACE = ROOT / ".agents" / "plugins" / "marketplace.json"
 INSTALL_SKILL = ROOT / ".agents" / "skills" / "install-charmfile"
-RELEASE_VERSION = "0.1.0-rc.4"
+RELEASE_VERSION = "0.1.0-rc.5"
 SIDECAR_VERSION = "0.6.1"
 
 EXPECTED_PLUGINS = {
@@ -342,6 +342,21 @@ def validate_content() -> None:
         fail("portable profile must use on-request approval")
     if profile.get("sandbox_mode") != "workspace-write":
         fail("portable profile must use workspace-write sandboxing")
+    if profile.get("personality") != "pragmatic":
+        fail("portable profile must use the pragmatic communication style")
+    expected_features = {
+        "goals": True,
+        "hooks": True,
+        "memories": True,
+        "multi_agent": True,
+        "personality": True,
+        "plugins": True,
+        "unified_exec": True,
+    }
+    if profile.get("features") != expected_features:
+        fail("portable profile must pin the reviewed stable feature set")
+    if "git-branch" not in profile.get("tui", {}).get("status_line", []):
+        fail("portable profile status line must expose the current Git branch")
     expected_mcp = {
         "openaiDeveloperDocs": {
             "url": "https://developers.openai.com/mcp"

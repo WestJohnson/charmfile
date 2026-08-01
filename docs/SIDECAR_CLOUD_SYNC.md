@@ -28,7 +28,7 @@ without inventing a private host layout.
 
 ## Release Gate
 
-The Charmfile `0.1.0-rc.4` source includes the memory skills. Runtime
+The Charmfile `0.1.0-rc.5` source includes the memory skills. Runtime
 installation resolves the published, checksum-verified Sidecar `0.6.1` release
 from the self-hosted Charmfile HTTPS channel. An installer must:
 

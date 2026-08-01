@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.1.0-rc.5 - 2026-08-01
+
+- Added `charmfile doctor --after-update`, which validates the effective stable
+  Codex workflow features and enforces the optional Sidecar health gate when
+  Sidecar is installed.
+- Added installed-Codex compatibility checks for every stable feature pinned by
+  the managed profile so unsupported releases fail visibly after an update.
+- Updated the portable profile with pragmatic communication, Git branch status,
+  and explicit stable goals, plugin, multi-agent, personality, and unified-exec
+  feature pins.
+- Added lifecycle regressions for successful post-update verification and the
+  required failure when Sidecar health falls below 80.
+
 ## 0.1.0-rc.4 - 2026-07-28
 
 - Updated the optional memory pack to the checksum-verified Sidecar `0.6.1`

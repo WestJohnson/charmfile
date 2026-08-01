@@ -13,6 +13,7 @@ bash -n "$repo_root/scripts/build-release.sh"
 bash -n "$repo_root/tests/core-install.sh"
 bash -n "$repo_root/tests/browser-setup.sh"
 bash -n "$repo_root/tests/full-lifecycle.sh"
+bash -n "$repo_root/tests/legacy-update.sh"
 bash -n "$repo_root/tests/marketplace-install.sh"
 bash -n "$repo_root/tests/secrets-helper.sh"
 bash -n "$repo_root/plugins/charmfile-core/skills/charmfile-setup/scripts/charmfile"
@@ -32,6 +33,7 @@ python3 -m py_compile \
 "$repo_root/tests/marketplace-install.sh"
 "$repo_root/tests/secrets-helper.sh"
 "$repo_root/tests/full-lifecycle.sh"
+"$repo_root/tests/legacy-update.sh"
 python3 \
   "$repo_root/plugins/charmfile-marketing/skills/dataforseo-api/scripts/dfs.py" \
   --help >/dev/null

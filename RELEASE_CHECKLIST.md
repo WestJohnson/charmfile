@@ -31,7 +31,7 @@
 - [x] `./scripts/validate-release.sh` passes.
 - [x] The release archive secret, personal-path, and excluded-integration scans
       are clean.
-- [ ] A clean self-hosted Git install and managed update pass.
+- [x] A clean self-hosted Git install and managed update pass on 2026-08-01.
 
 ## Publication
 
@@ -40,11 +40,11 @@
 - [ ] Publish immutable Sidecar `0.6.1` artifacts and checksums before replacing
       the mutable release index.
 - [ ] Push the same Sidecar commit and tag to the GitHub mirror.
-- [ ] Push reviewed Charmfile commit and signed `v0.1.0-rc.5` tag to the
+- [x] Push reviewed Charmfile commit and signed `v0.1.0-rc.5` tag to the
       canonical self-hosted Git repository and GitHub mirror.
-- [ ] Publish the Charmfile rc.5 archive and checksums before replacing its
+- [x] Publish the Charmfile rc.5 archive and checksums before replacing its
       mutable index.
-- [ ] Update the production release tree through a timestamped rollback bundle,
+- [x] Update the production release tree through a timestamped rollback bundle,
       run `nginx -t`, and reload only after it passes.
-- [ ] Verify homepage, privacy, terms, support, security, Git, release,
+- [x] Verify homepage, privacy, terms, support, security, Git, release,
       checksum, install, update, and rollback URLs over HTTPS.

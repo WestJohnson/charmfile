@@ -7,7 +7,8 @@ a public mirror and provenance surface, not an installation dependency.
 
 1. Complete every local item in `RELEASE_CHECKLIST.md`.
 2. Push the reviewed signed tag to the canonical bare repository on the VPS.
-3. Run `git update-server-info` so HTTPS clones can resolve the new refs.
+3. Repack the canonical bare repository and run `git update-server-info` so
+   HTTPS clones resolve the new refs without fragile loose-object transfers.
 4. Publish versioned artifacts before replacing any mutable index or latest
    pointer.
 5. Verify the homepage, Git clone URLs, privacy, terms, support, release

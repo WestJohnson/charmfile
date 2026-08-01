@@ -10,25 +10,31 @@
 
 ## Sidecar 0.6.1 dependency
 
-- [ ] Deterministic Sidecar suite and Ruff validation pass.
-- [ ] The reviewed `v0.6.1` commit and tag match the canonical self-hosted Git
+- [x] Deterministic Sidecar suite and Ruff validation pass.
+- [x] The reviewed `v0.6.1` commit and tag match the canonical self-hosted Git
       repository and GitHub mirror.
-- [ ] The public wheel, rollback wheel, checksums, and update index remain
+- [x] The public wheel, rollback wheel, checksums, and update index remain
       available and checksum-valid.
-- [ ] Local Sidecar doctor and benchmark remain healthy after the Charmfile
+- [x] Local Sidecar doctor and benchmark remain healthy after the Charmfile
       consolidation.
-- [ ] Cloud doctor and benchmark are recorded separately and do not block
+- [x] Cloud doctor and benchmark are recorded separately and do not block
       local-only Charmfile installation.
+
+Local Sidecar evidence: 164 tests and Ruff pass; doctor scores 95 with zero
+critical failures; benchmark scores 100. Cloud doctor is healthy with a fully
+synced replica. `cloud-benchmark` is a Linux deployment gate and cannot run on
+this macOS release workstation because `systemctl` is unavailable; it remains
+separate from the local-memory release gate.
 
 ## Charmfile package
 
-- [ ] Repository, plugin, skill, privacy, credential, and shell validation pass.
-- [ ] Core, standard, standard plus Browser, and full installs pass in isolated
+- [x] Repository, plugin, skill, privacy, credential, and shell validation pass.
+- [x] Core, standard, standard plus Browser, and full installs pass in isolated
       Codex homes.
-- [ ] Individual `--with PACK` selection and invalid-pack rejection pass.
-- [ ] Updates preserve each isolated installation's exact pack count.
-- [ ] Existing rc.5 full installation updates without losing any pack.
-- [ ] Sidecar health below 80 fails the strict post-update gate.
+- [x] Individual `--with PACK` selection and invalid-pack rejection pass.
+- [x] Updates preserve each isolated installation's exact pack count.
+- [x] Existing rc.5 full installation updates without losing any pack.
+- [x] Sidecar health below 80 fails the strict post-update gate.
 - [ ] The rc.6 archive is built from a clean tagged commit and passes checksum,
       secret, personal-path, and excluded-integration scans.
 

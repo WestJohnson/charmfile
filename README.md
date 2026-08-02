@@ -217,7 +217,7 @@ backups.
 
 ## Project status
 
-`0.2.0-rc.2` release candidate. The canonical Git repository, checksummed
+`0.2.0-rc.3` release candidate. The canonical Git repository, checksummed
 archives, policy documents, and Sidecar update channel are self-hosted at
 `charmfile.com`. GitHub remains a public mirror. Charmfile has not
 been submitted to the universal plugin directory.

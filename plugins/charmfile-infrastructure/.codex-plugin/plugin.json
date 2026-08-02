@@ -1,6 +1,6 @@
 {
   "name": "charmfile-infrastructure",
-  "version": "0.2.0-rc.2",
+  "version": "0.2.0-rc.3",
   "description": "Inspect VPS health, capacity, services, backups, and operational risk using live evidence.",
   "author": {
     "name": "Charmfile contributors",

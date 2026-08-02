@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.0-rc.3 - 2026-08-01
+
+- Forced Codex marketplace Git operations to HTTP/1.1 so Git 2.54 does not
+  enter a high-CPU HTTP/2 stall against the static read-only HTTPS mirror.
+- Kept existing global and injected Git configuration intact while still
+  avoiding creation or replacement of `~/.gitconfig`.
+
 ## 0.2.0-rc.2 - 2026-08-01
 
 - Prevented public Git marketplace installs and updates from stalling when a

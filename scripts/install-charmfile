@@ -45,17 +45,27 @@ ensure_jq() {
   require_command jq
 }
 
-run_codex_with_git_config() {
-  local xdg_git_config
+run_codex_with_git_transport() {
+  local git_config_count xdg_git_config
+  local -a codex_env
+  git_config_count="${GIT_CONFIG_COUNT:-0}"
+  case "$git_config_count" in
+    ''|*[!0-9]*) die "GIT_CONFIG_COUNT must be a non-negative integer" ;;
+  esac
   xdg_git_config="${XDG_CONFIG_HOME:-$HOME/.config}/git/config"
+  codex_env=(
+    "GIT_CONFIG_COUNT=$((git_config_count + 1))"
+    "GIT_CONFIG_KEY_$git_config_count=http.version"
+    "GIT_CONFIG_VALUE_$git_config_count=HTTP/1.1"
+  )
 
-  if [ -n "${GIT_CONFIG_GLOBAL:-}" ] ||
-    [ -f "$HOME/.gitconfig" ] ||
-    [ -f "$xdg_git_config" ]; then
-    codex "$@"
-  else
-    GIT_CONFIG_GLOBAL=/dev/null codex "$@"
+  if [ -z "${GIT_CONFIG_GLOBAL:-}" ] &&
+    [ ! -f "$HOME/.gitconfig" ] &&
+    [ ! -f "$xdg_git_config" ]; then
+    codex_env+=("GIT_CONFIG_GLOBAL=/dev/null")
   fi
+
+  env "${codex_env[@]}" codex "$@"
 }
 
 core_script() {
@@ -454,7 +464,7 @@ case "$command_name" in
     ensure_jq
     prepare_codex_home
     marketplace_json="$(
-      run_codex_with_git_config \
+      run_codex_with_git_transport \
         plugin marketplace add "$marketplace_source" --json
     )" || die "Codex failed to register the charmfile marketplace"
     if ! printf '%s\n' "$marketplace_json" |
@@ -484,7 +494,7 @@ case "$command_name" in
     show_plan "$current_root" update
     source_type="$(marketplace_source_type)"
     if [ "$source_type" = "git" ]; then
-      run_codex_with_git_config \
+      run_codex_with_git_transport \
         plugin marketplace upgrade charmfile --json >/dev/null
     else
       printf 'Local marketplace: using the current checkout without a Git refresh.\n'

@@ -16,6 +16,9 @@ usage() {
     "  install-charmfile install [--source PATH_OR_GIT] [--preset core|standard|full] [--with-browser] [--with PACK] --yes" \
     "  install-charmfile update --yes" \
     "  install-charmfile doctor [--require-live-chrome] [--after-update]" \
+    "  install-charmfile init [--repo PATH] [--id ID] [--name NAME] [--repository IDENTITY] [--memory-project NAME] [--yes]" \
+    "  install-charmfile resume [--repo PATH]" \
+    "  install-charmfile status [--repo PATH]" \
     "" \
     "The default preset is standard: Charmfile Core plus Charmfile Memory." \
     "Memory activation, browser automation, specialist packs, and cloud mode remain separate choices."
@@ -357,6 +360,15 @@ command_name="${1:-help}"
 if [ "$#" -gt 0 ]; then
   shift
 fi
+
+case "$command_name" in
+  init|resume|status)
+    project_command="$repo_root/scripts/charmfile-project"
+    [ -x "$project_command" ] ||
+      die "project continuity command is missing: $project_command"
+    exec "$project_command" "$command_name" "$@"
+    ;;
+esac
 
 approved="false"
 require_live_chrome="false"

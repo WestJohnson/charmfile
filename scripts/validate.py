@@ -30,6 +30,7 @@ EXPECTED_PLUGINS = {
 }
 
 REQUIRED_FILES = {
+    ".charmfile/project.toml",
     ".gitattributes",
     "INSTALL.md",
     "README.md",
@@ -47,6 +48,7 @@ REQUIRED_FILES = {
     "docs/MEMORY.md",
     "docs/CLOUD.md",
     "docs/PACKS.md",
+    "docs/RESUME.md",
     "docs/SIDECAR_CLOUD_SYNC.md",
     "plugins/charmfile-memory/skills/obsidian-sidecar-setup/references/cloud-sync-contract.md",
 }
@@ -278,8 +280,31 @@ def validate_content() -> None:
             f"{SIDECAR_VERSION} release"
         )
 
+    project_manifest_path = ROOT / ".charmfile" / "project.toml"
+    try:
+        project_manifest = tomllib.loads(
+            project_manifest_path.read_text(encoding="utf-8")
+        )
+    except tomllib.TOMLDecodeError as exc:
+        fail(f"portable project manifest is invalid TOML: {exc}")
+    project_identity = project_manifest.get("project") or {}
+    memory_identity = project_manifest.get("memory") or {}
+    if project_manifest.get("schema") != 1:
+        fail("portable project manifest must use schema 1")
+    if project_manifest.get("managed_by") != "charmfile":
+        fail("portable project manifest must be managed by Charmfile")
+    if project_identity.get("canonical_id") != "project:charmfile":
+        fail("portable project manifest has an unexpected canonical identity")
+    if memory_identity.get("path") != "10 Projects/charmfile/Project.md":
+        fail("portable project manifest has an unexpected Memory path")
+    if memory_identity.get("uri") != (
+        "memory://codex-vault/10-projects/charmfile/project"
+    ):
+        fail("portable project manifest has an unexpected Memory URI")
+
     executable_paths = [
         ROOT / "scripts" / "install-charmfile",
+        ROOT / "scripts" / "charmfile-project",
         ROOT
         / "plugins"
         / "charmfile-core"

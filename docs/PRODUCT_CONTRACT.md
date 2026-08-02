@@ -16,6 +16,21 @@ VPS or server may extend that memory system, but no server is required.
 4. **Capability packs** add focused browser, frontend, marketing, research,
    infrastructure, or Three.js workflows without changing the core product.
 
+## Portable Project Continuity
+
+A repository may carry `.charmfile/project.toml`, a small portable identity
+that maps the project to its canonical Charmfile Memory note. The manifest may
+contain a project ID and name, a public repository identity, and a vault-relative
+memory reference. It must not contain credentials, local absolute paths, vault
+contents, hosts, or machine state.
+
+`charmfile init` is plan-first and creates the manifest only after explicit
+`--yes` approval. It never overwrites a differing manifest. `charmfile resume`
+and `charmfile status` are read-only: they may combine the manifest with local
+Git state, the configured local Memory note, installed pack metadata, and the
+cached Sidecar health result, but they do not repair, sync, index, or mutate
+those sources.
+
 The Sidecar remains a separate repository and release because it is a Python
 runtime with its own safety and rollback contract. It is presented to users as
 the engine behind Charmfile Memory rather than as a competing product.

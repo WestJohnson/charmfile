@@ -48,6 +48,19 @@ charmfile update --yes
 charmfile doctor
 ```
 
+For repository continuity after the lifecycle is healthy:
+
+```sh
+charmfile init                 # inspect the portable manifest plan
+charmfile init --yes           # create it after approval
+charmfile resume               # Git state plus durable project context
+charmfile status               # layers, cached health, and freshness
+```
+
+`init` never overwrites a differing `.charmfile/project.toml`. `resume` and
+`status` are read-only and do not activate Memory, run live Cloud checks, or
+repair local state.
+
 ## Boundaries
 
 - This release supports macOS only. Stop on any other operating system.

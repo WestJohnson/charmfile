@@ -1,0 +1,806 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+die() {
+  printf 'charmfile: %s\n' "$*" >&2
+  exit 1
+}
+
+usage() {
+  printf '%s\n' \
+    "Usage:" \
+    "  charmfile init   [--repo PATH] [--id ID] [--name NAME] [--repository IDENTITY] [--memory-project NAME] [--yes]" \
+    "  charmfile resume [--repo PATH]" \
+    "  charmfile status [--repo PATH]" \
+    "" \
+    "init is plan-first and writes .charmfile/project.toml only with --yes." \
+    "resume and status are read-only."
+}
+
+require_macos() {
+  [ "$(uname -s)" = "Darwin" ] ||
+    die "this Charmfile release supports macOS only"
+}
+
+normalize_repo_root() {
+  local requested="$1"
+  local resolved
+  [ -d "$requested" ] || die "repository path does not exist: $requested"
+  resolved="$(cd "$requested" && pwd -P)"
+  if command -v git >/dev/null 2>&1 &&
+    git -C "$resolved" rev-parse --show-toplevel >/dev/null 2>&1; then
+    git -C "$resolved" rev-parse --show-toplevel
+  else
+    printf '%s\n' "$resolved"
+  fi
+}
+
+slugify() {
+  printf '%s' "$1" |
+    tr '[:upper:]_' '[:lower:]-' |
+    sed -E \
+      -e 's/[^a-z0-9]+/-/g' \
+      -e 's/^-+//' \
+      -e 's/-+$//' \
+      -e 's/-+/-/g'
+}
+
+validate_project_id() {
+  [[ "$1" =~ ^[a-z0-9][a-z0-9-]{0,63}$ ]] ||
+    die "project ID must use 1-64 lowercase letters, numbers, or hyphens"
+}
+
+validate_project_name() {
+  local value="$1"
+  [ -n "$value" ] && [ "${#value}" -le 120 ] ||
+    die "project name must contain 1-120 characters"
+  case "$value" in
+    *$'\n'*|*$'\r'*|*'"'*|*'\'*)
+      die "project name cannot contain newlines, quotes, or backslashes"
+      ;;
+  esac
+  LC_ALL=C printf '%s' "$value" | grep -Eq '^[[:print:]]+$' ||
+    die "project name contains unsupported control characters"
+}
+
+validate_memory_project() {
+  [[ "$1" =~ ^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$ ]] ||
+    die "memory project must use 1-64 letters, numbers, dots, underscores, or hyphens"
+}
+
+sanitize_repository_identity() {
+  local value="$1"
+  local sanitized
+  case "$value" in
+    http://*|https://*)
+      sanitized="$(
+        printf '%s' "$value" |
+          sed -E \
+            -e 's#^(https?://)[^/@]+@#\1#' \
+            -e 's/[?#].*$//'
+      )"
+      ;;
+    *@*:*)
+      sanitized="$(
+        printf '%s' "$value" |
+          sed -E 's#^[^@]+@([^:]+):#\1/#'
+      )"
+      ;;
+    /*|./*|../*|~*|file:*|*://*|*:*)
+      return 1
+      ;;
+    *)
+      sanitized="$value"
+      ;;
+  esac
+  case "$sanitized" in
+    ''|*$'\n'*|*$'\r'*|*'"'*|*'\'*) return 1 ;;
+  esac
+  [ "${#sanitized}" -le 240 ] || return 1
+  printf '%s\n' "$sanitized"
+}
+
+discover_repository_identity() {
+  local repo_root="$1"
+  local remote_url
+  command -v git >/dev/null 2>&1 || return 0
+  remote_url="$(git -C "$repo_root" remote get-url origin 2>/dev/null || true)"
+  [ -n "$remote_url" ] || return 0
+  sanitize_repository_identity "$remote_url" || true
+}
+
+memory_uri_from_path() {
+  local memory_project="$1"
+  local memory_path="$2"
+  local permalink
+  permalink="$(
+    printf '%s' "$memory_path" |
+      tr '[:upper:] ' '[:lower:]-' |
+      sed -E \
+        -e 's/\.md$//' \
+        -e 's/[^a-z0-9/_-]+/-/g' \
+        -e 's/-+/-/g' \
+        -e 's#(^|/)-+#\1#g' \
+        -e 's#-+(/|$)#\1#g'
+  )"
+  printf 'memory://%s/%s\n' "$memory_project" "$permalink"
+}
+
+render_manifest() {
+  local project_id="$1"
+  local project_name="$2"
+  local repository_identity="$3"
+  local memory_project="$4"
+  local memory_path="$5"
+  local memory_uri
+  memory_uri="$(memory_uri_from_path "$memory_project" "$memory_path")"
+  printf '%s\n' \
+    '# Charmfile portable project identity.' \
+    'schema = 1' \
+    'managed_by = "charmfile"' \
+    '' \
+    '[project]' \
+    "id = \"$project_id\"" \
+    "name = \"$project_name\"" \
+    "canonical_id = \"project:$project_id\"" \
+    '' \
+    '[repository]' \
+    "canonical = \"$repository_identity\"" \
+    '' \
+    '[memory]' \
+    "project = \"$memory_project\"" \
+    "path = \"$memory_path\"" \
+    "uri = \"$memory_uri\""
+}
+
+manifest_value() {
+  local manifest="$1"
+  local wanted_section="$2"
+  local wanted_key="$3"
+  awk -v wanted_section="$wanted_section" -v wanted_key="$wanted_key" '
+    function trim(value) {
+      sub(/^[[:space:]]+/, "", value)
+      sub(/[[:space:]]+$/, "", value)
+      return value
+    }
+    /^[[:space:]]*\[[^]]+\][[:space:]]*$/ {
+      current = $0
+      gsub(/^[[:space:]]*\[|\][[:space:]]*$/, "", current)
+      next
+    }
+    {
+      separator = index($0, "=")
+      if (separator == 0 || current != wanted_section) {
+        next
+      }
+      key = trim(substr($0, 1, separator - 1))
+      if (key != wanted_key) {
+        next
+      }
+      value = trim(substr($0, separator + 1))
+      if (substr(value, 1, 1) == "\"" &&
+          substr(value, length(value), 1) == "\"") {
+        value = substr(value, 2, length(value) - 2)
+      }
+      print value
+      exit
+    }
+  ' "$manifest"
+}
+
+manifest_top_value() {
+  local manifest="$1"
+  local wanted_key="$2"
+  awk -v wanted_key="$wanted_key" '
+    function trim(value) {
+      sub(/^[[:space:]]+/, "", value)
+      sub(/[[:space:]]+$/, "", value)
+      return value
+    }
+    /^[[:space:]]*\[/ { exit }
+    {
+      separator = index($0, "=")
+      if (separator == 0) {
+        next
+      }
+      key = trim(substr($0, 1, separator - 1))
+      if (key != wanted_key) {
+        next
+      }
+      value = trim(substr($0, separator + 1))
+      if (substr(value, 1, 1) == "\"" &&
+          substr(value, length(value), 1) == "\"") {
+        value = substr(value, 2, length(value) - 2)
+      }
+      print value
+      exit
+    }
+  ' "$manifest"
+}
+
+validate_memory_path() {
+  local value="$1"
+  case "$value" in
+    ''|/*|../*|*/../*|*/..|..|*$'\n'*|*$'\r'*|*'"'*|*'\'*)
+      die "memory path must be a safe vault-relative Markdown path"
+      ;;
+    *.md) ;;
+    *) die "memory path must end in .md" ;;
+  esac
+  [ "${#value}" -le 240 ] || die "memory path is too long"
+}
+
+load_manifest() {
+  local manifest="$1"
+  [ -f "$manifest" ] && [ ! -L "$manifest" ] ||
+    die "portable project manifest is missing or unsafe: $manifest"
+  manifest_schema="$(manifest_top_value "$manifest" schema)"
+  manifest_managed_by="$(manifest_top_value "$manifest" managed_by)"
+  manifest_project_id="$(manifest_value "$manifest" project id)"
+  manifest_project_name="$(manifest_value "$manifest" project name)"
+  manifest_canonical_id="$(manifest_value "$manifest" project canonical_id)"
+  manifest_repository="$(manifest_value "$manifest" repository canonical)"
+  manifest_memory_project="$(manifest_value "$manifest" memory project)"
+  manifest_memory_path="$(manifest_value "$manifest" memory path)"
+  manifest_memory_uri="$(manifest_value "$manifest" memory uri)"
+  [ "$manifest_schema" = "1" ] || die "unsupported project manifest schema"
+  [ "$manifest_managed_by" = "charmfile" ] ||
+    die "project manifest is not managed by Charmfile"
+  validate_project_id "$manifest_project_id"
+  validate_project_name "$manifest_project_name"
+  validate_memory_project "$manifest_memory_project"
+  validate_memory_path "$manifest_memory_path"
+  if [ -n "$manifest_repository" ]; then
+    [ "$manifest_repository" = "$(
+      sanitize_repository_identity "$manifest_repository"
+    )" ] || die "repository identity is machine-specific or contains unsafe data"
+  fi
+  [ "$manifest_canonical_id" = "project:$manifest_project_id" ] ||
+    die "project canonical identity does not match its ID"
+  [ "$manifest_memory_uri" = "$(
+    memory_uri_from_path "$manifest_memory_project" "$manifest_memory_path"
+  )" ] || die "memory URI does not match the portable memory path"
+}
+
+project_home() {
+  printf '%s\n' "${CHARMFILE_TARGET_HOME:-$HOME}"
+}
+
+sidecar_config_path() {
+  local home_path
+  home_path="$(project_home)"
+  if [ -n "${CHARMFILE_SIDECAR_CONFIG:-}" ]; then
+    printf '%s\n' "$CHARMFILE_SIDECAR_CONFIG"
+  elif [ -n "${CHARMFILE_TARGET_HOME:-}" ]; then
+    printf '%s/.config/codex-obsidian-sidecar/config.json\n' "$home_path"
+  else
+    printf '%s/codex-obsidian-sidecar/config.json\n' \
+      "${XDG_CONFIG_HOME:-$home_path/.config}"
+  fi
+}
+
+sidecar_health_path() {
+  local home_path
+  home_path="$(project_home)"
+  if [ -n "${CHARMFILE_SIDECAR_HEALTH:-}" ]; then
+    printf '%s\n' "$CHARMFILE_SIDECAR_HEALTH"
+  elif [ -n "${CHARMFILE_TARGET_HOME:-}" ]; then
+    printf '%s/.local/share/codex-obsidian-sidecar/health.json\n' "$home_path"
+  else
+    printf '%s/codex-obsidian-sidecar/health.json\n' \
+      "${XDG_DATA_HOME:-$home_path/.local/share}"
+  fi
+}
+
+load_memory_note() {
+  local config_path
+  local vault_path
+  local note_path
+  memory_note=""
+  memory_note_available="false"
+  config_path="$(sidecar_config_path)"
+  if [ ! -f "$config_path" ] || ! command -v jq >/dev/null 2>&1; then
+    return
+  fi
+  vault_path="$(jq -r '.vault_path // empty' "$config_path" 2>/dev/null || true)"
+  [ -n "$vault_path" ] && [ -d "$vault_path" ] || return
+  note_path="$vault_path/$manifest_memory_path"
+  [ -f "$note_path" ] && [ ! -L "$note_path" ] || return
+  memory_note="$(sed -n '1,1200p' "$note_path")"
+  memory_note_available="true"
+}
+
+memory_markdown_value() {
+  local label="$1"
+  local prefix="- **$label:**"
+  awk -v prefix="$prefix" '
+      index($0, prefix) == 1 {
+        value = substr($0, length(prefix) + 1)
+        sub(/^[[:space:]]+/, "", value)
+        print value
+        exit
+      }
+    ' <<< "$memory_note"
+}
+
+memory_frontmatter_value() {
+  local key="$1"
+  awk -v wanted="$key" '
+      NR == 1 && $0 == "---" { frontmatter = 1; next }
+      frontmatter && $0 == "---" { exit }
+      frontmatter {
+        line = $0
+        sub(/^[[:space:]]+/, "", line)
+      }
+      frontmatter && index(line, wanted ":") == 1 {
+        value = substr(line, length(wanted) + 2)
+        sub(/^[[:space:]]+/, "", value)
+        single_quote = sprintf("%c", 39)
+        if (substr(value, 1, 1) == single_quote &&
+            substr(value, length(value), 1) == single_quote) {
+          value = substr(value, 2, length(value) - 2)
+        }
+        if (substr(value, 1, 1) == "\"" &&
+            substr(value, length(value), 1) == "\"") {
+          value = substr(value, 2, length(value) - 2)
+        }
+        print value
+        exit
+      }
+    ' <<< "$memory_note"
+}
+
+memory_open_work() {
+  awk '
+      /<!-- SIDECAR:OPEN-WORK:START -->/ { inside = 1; next }
+      /<!-- SIDECAR:OPEN-WORK:END -->/ { exit }
+      inside && /^[0-9]+\./ { print }
+    ' <<< "$memory_note" |
+    sed -E 's/ \(\[\[.*\|source\]\]\)$//'
+}
+
+memory_decision_count() {
+  local wanted_status="$1"
+  awk -v wanted_status="$wanted_status" '
+      BEGIN {
+        backtick = sprintf("%c", 96)
+        wanted = backtick wanted_status backtick
+      }
+      /<!-- SIDECAR:DECISION-REVIEW:START -->/ { inside = 1; next }
+      /<!-- SIDECAR:DECISION-REVIEW:END -->/ { exit }
+      inside && index($0, wanted) > 0 { count += 1 }
+      END { print count + 0 }
+    ' <<< "$memory_note"
+}
+
+load_git_state() {
+  local repo_root="$1"
+  local change_count
+  git_available="false"
+  git_branch="not available"
+  git_head="not available"
+  git_worktree="not a Git repository"
+  if ! command -v git >/dev/null 2>&1 ||
+    ! git -C "$repo_root" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    return
+  fi
+  git_available="true"
+  git_branch="$(
+    git -C "$repo_root" symbolic-ref --quiet --short HEAD 2>/dev/null ||
+      printf 'detached'
+  )"
+  git_head="$(git -C "$repo_root" rev-parse --short=12 HEAD 2>/dev/null || true)"
+  change_count="$(
+    git -C "$repo_root" status --porcelain=v1 2>/dev/null |
+      awk 'END { print NR + 0 }'
+  )"
+  if [ "$change_count" -eq 0 ]; then
+    git_worktree="clean"
+  else
+    git_worktree="$change_count change(s)"
+  fi
+}
+
+resolve_freshness() {
+  local observed_at="$1"
+  local review_after="$2"
+  local now
+  freshness_state="unavailable"
+  [ -n "$observed_at" ] || return 0
+  freshness_state="current"
+  if [ -n "$review_after" ]; then
+    now="$(date -u '+%Y-%m-%dT%H:%M:%S+00:00')"
+    if [[ "$now" > "$review_after" ]]; then
+      freshness_state="review due"
+    fi
+  fi
+}
+
+init_project() {
+  local repo_root="$1"
+  local manifest_dir="$repo_root/.charmfile"
+  local manifest="$manifest_dir/project.toml"
+  local project_id="$id_arg"
+  local project_name="$name_arg"
+  local repository_identity="$repository_arg"
+  local memory_path
+  local action
+  local target_temp
+
+  if [ -z "$project_id" ]; then
+    project_id="$(slugify "$(basename "$repo_root")")"
+  fi
+  [ -n "$project_id" ] || die "could not derive a project ID; pass --id"
+  if [ -z "$project_name" ]; then
+    project_name="$(basename "$repo_root")"
+  fi
+  validate_project_id "$project_id"
+  validate_project_name "$project_name"
+  validate_memory_project "$memory_project_arg"
+  memory_path="10 Projects/$project_id/Project.md"
+  validate_memory_path "$memory_path"
+
+  if [ -n "$repository_identity" ]; then
+    repository_identity="$(
+      sanitize_repository_identity "$repository_identity"
+    )" || die "repository identity is machine-specific or contains unsafe data"
+  else
+    repository_identity="$(discover_repository_identity "$repo_root")"
+  fi
+
+  if [ -L "$manifest" ]; then
+    action="blocked-symlink"
+  elif [ -e "$manifest" ] && [ ! -f "$manifest" ]; then
+    action="blocked-nonregular"
+  elif [ ! -e "$manifest" ]; then
+    action="create"
+  elif cmp -s "$manifest" <(
+    render_manifest \
+      "$project_id" "$project_name" "$repository_identity" \
+      "$memory_project_arg" "$memory_path"
+  ); then
+    action="current"
+  else
+    action="blocked-existing"
+  fi
+
+  printf 'Charmfile project init plan\n'
+  printf '  repository: %s\n' "$repo_root"
+  printf '  manifest: %s\n' "$manifest"
+  printf '  action: %s\n' "$action"
+  printf '  project ID: %s\n' "$project_id"
+  printf '  project name: %s\n' "$project_name"
+  if [ -n "$repository_identity" ]; then
+    printf '  repository identity: %s\n' "$repository_identity"
+  else
+    printf '  repository identity: not recorded\n'
+  fi
+  printf '  memory project: %s\n' "$memory_project_arg"
+  printf '  memory path: %s\n' "$memory_path"
+  printf '  secrets and machine paths: excluded\n'
+
+  case "$action" in
+    blocked-*) return 1 ;;
+  esac
+  if [ "$approved" != "true" ]; then
+    printf 'Project manifest unchanged; rerun with --yes after approving this plan.\n'
+    return
+  fi
+  if [ "$action" = "current" ]; then
+    printf 'Project manifest is already current: %s\n' "$manifest"
+    return
+  fi
+  if [ -L "$manifest_dir" ] ||
+    { [ -e "$manifest_dir" ] && [ ! -d "$manifest_dir" ]; }; then
+    die "refusing unsafe manifest directory: $manifest_dir"
+  fi
+  mkdir -p "$manifest_dir"
+  target_temp="$(mktemp "$manifest_dir/.project.toml.XXXXXX")"
+  render_manifest \
+    "$project_id" "$project_name" "$repository_identity" \
+    "$memory_project_arg" "$memory_path" > "$target_temp"
+  chmod 644 "$target_temp"
+  mv "$target_temp" "$manifest"
+  printf 'Project manifest created: %s\n' "$manifest"
+}
+
+resume_project() {
+  local repo_root="$1"
+  local manifest="$repo_root/.charmfile/project.toml"
+  local phase
+  local outcome
+  local next_step
+  local observed_at
+  local review_after
+  local open_work
+  local proposed_count
+
+  [ -f "$manifest" ] ||
+    die "project is not initialized; run charmfile init --repo '$repo_root'"
+  load_manifest "$manifest"
+  load_git_state "$repo_root"
+  load_memory_note
+
+  printf 'Charmfile resume\n'
+  printf 'Project\n'
+  printf '  Name: %s\n' "$manifest_project_name"
+  printf '  Identity: %s\n' "$manifest_canonical_id"
+  printf '  Manifest: .charmfile/project.toml\n'
+  if [ -n "$manifest_repository" ]; then
+    printf '  Repository identity: %s\n' "$manifest_repository"
+  else
+    printf '  Repository identity: not recorded\n'
+  fi
+  printf 'Repository\n'
+  if [ "$git_available" = "true" ]; then
+    printf '  Git: %s at %s · %s\n' "$git_branch" "$git_head" "$git_worktree"
+  else
+    printf '  Git: %s\n' "$git_worktree"
+  fi
+  printf 'Durable context\n'
+  if [ "$memory_note_available" != "true" ]; then
+    printf '  State: unavailable; activate Charmfile Memory or repair its local config\n'
+    printf '  Expected source: %s\n' "$manifest_memory_uri"
+    printf 'Open work\n'
+    printf '  unavailable\n'
+  else
+    phase="$(memory_markdown_value Phase)"
+    outcome="$(memory_markdown_value 'Latest outcome')"
+    next_step="$(memory_markdown_value Resume)"
+    observed_at="$(memory_frontmatter_value observed_at)"
+    review_after="$(memory_frontmatter_value review_after)"
+    resolve_freshness "$observed_at" "$review_after"
+    proposed_count="$(memory_decision_count proposed)"
+    printf '  Phase: %s\n' "${phase:-unknown}"
+    printf '  Latest outcome: %s\n' "${outcome:-unavailable}"
+    printf '  Resume: %s\n' "${next_step:-unavailable}"
+    printf '  Freshness: %s' "$freshness_state"
+    if [ -n "$observed_at" ]; then
+      printf ' · observed %s' "$observed_at"
+    fi
+    printf '\n'
+    printf '  Decisions: %s proposed for optional review\n' "$proposed_count"
+    printf '  Source: %s\n' "$manifest_memory_uri"
+    printf 'Open work\n'
+    open_work="$(memory_open_work)"
+    if [ -n "$open_work" ]; then
+      printf '%s\n' "$open_work" | sed 's/^/  /'
+    else
+      printf '  none recorded\n'
+    fi
+  fi
+  printf 'Read-only: no configuration or memory was changed.\n'
+}
+
+installed_packs() {
+  command -v codex >/dev/null 2>&1 || return 0
+  command -v jq >/dev/null 2>&1 || return 0
+  codex plugin list --json 2>/dev/null |
+    jq -r '
+      .installed[]?
+      | select(.installed == true)
+      | .pluginId
+      | select(endswith("@charmfile"))
+      | split("@")[0]
+    ' 2>/dev/null |
+    sort -u || true
+}
+
+pack_is_installed() {
+  local expected="$1"
+  printf '%s\n' "$pack_lines" | grep -Fxq "$expected"
+}
+
+format_packs() {
+  local first="true"
+  local pack
+  while IFS= read -r pack; do
+    [ -n "$pack" ] || continue
+    if [ "$first" = "true" ]; then
+      printf '%s' "$pack"
+      first="false"
+    else
+      printf ', %s' "$pack"
+    fi
+  done <<< "$pack_lines"
+  if [ "$first" = "true" ]; then
+    printf 'none detected'
+  fi
+  printf '\n'
+}
+
+status_project() {
+  local repo_root="$1"
+  local manifest="$repo_root/.charmfile/project.toml"
+  local config_path
+  local health_path
+  local cloud_host
+  local score
+  local critical_failures
+  local basic_memory
+  local observed_at
+  local review_after
+  local proposed_count
+  local memory_state
+
+  load_git_state "$repo_root"
+  pack_lines="$(installed_packs)"
+  config_path="$(sidecar_config_path)"
+  health_path="$(sidecar_health_path)"
+
+  printf 'Charmfile status\n'
+  printf 'Project\n'
+  if [ -f "$manifest" ]; then
+    load_manifest "$manifest"
+    printf '  Identity: %s · %s\n' \
+      "$manifest_canonical_id" "$manifest_project_name"
+  else
+    printf '  Identity: not initialized · run charmfile init\n'
+  fi
+  if [ "$git_available" = "true" ]; then
+    printf '  Git: %s at %s · %s\n' "$git_branch" "$git_head" "$git_worktree"
+  else
+    printf '  Git: %s\n' "$git_worktree"
+  fi
+
+  printf 'Layers\n'
+  if pack_is_installed charmfile-core || command -v charmfile >/dev/null 2>&1; then
+    printf '  Core: installed\n'
+  else
+    printf '  Core: not detected\n'
+  fi
+  memory_state="not installed"
+  if pack_is_installed charmfile-memory ||
+    command -v obsidian-sidecar >/dev/null 2>&1; then
+    if ! command -v obsidian-sidecar >/dev/null 2>&1; then
+      memory_state="pack installed · activation pending"
+    elif [ -f "$health_path" ] && command -v jq >/dev/null 2>&1 &&
+      jq -e 'type == "object"' "$health_path" >/dev/null 2>&1; then
+      score="$(
+        jq -r \
+          'if (.score | type) == "number" then (.score | floor) else 0 end' \
+          "$health_path"
+      )"
+      critical_failures="$(
+        jq -r \
+          'if (.critical_failures | type) == "number" then (.critical_failures | floor) else 1 end' \
+          "$health_path"
+      )"
+      basic_memory="$(
+        jq -r \
+          'if (.basic_memory | type) == "string" then .basic_memory else "unknown" end' \
+          "$health_path"
+      )"
+      if [ "$critical_failures" -eq 0 ] && [ "$score" -ge 80 ]; then
+        memory_state="healthy · cached score $score · Basic Memory $basic_memory"
+      else
+        memory_state="degraded · cached score $score · $critical_failures critical failure(s)"
+      fi
+    else
+      memory_state="activated · cached health unavailable"
+    fi
+  fi
+  printf '  Memory: %s\n' "$memory_state"
+  cloud_host=""
+  if [ -f "$config_path" ] && command -v jq >/dev/null 2>&1; then
+    cloud_host="$(
+      jq -r '.cloud_status_ssh_host // empty' "$config_path" 2>/dev/null || true
+    )"
+  fi
+  if [ -n "$cloud_host" ]; then
+    printf '  Cloud: configured · run obsidian-sidecar cloud-doctor for live health\n'
+  else
+    printf '  Cloud: not configured\n'
+  fi
+  printf '  Packs: '
+  format_packs
+
+  printf 'Continuity\n'
+  if [ -f "$manifest" ]; then
+    load_memory_note
+    if [ "$memory_note_available" = "true" ]; then
+      observed_at="$(memory_frontmatter_value observed_at)"
+      review_after="$(memory_frontmatter_value review_after)"
+      resolve_freshness "$observed_at" "$review_after"
+      proposed_count="$(memory_decision_count proposed)"
+      printf '  Freshness: %s' "$freshness_state"
+      if [ -n "$observed_at" ]; then
+        printf ' · observed %s' "$observed_at"
+      fi
+      printf '\n'
+      printf '  Decisions: %s proposed for optional review\n' "$proposed_count"
+      printf '  Source: %s\n' "$manifest_memory_uri"
+    else
+      printf '  Freshness: unavailable\n'
+      printf '  Decisions: unavailable\n'
+      printf '  Expected source: %s\n' "$manifest_memory_uri"
+    fi
+  else
+    printf '  Freshness: unavailable until project init\n'
+    printf '  Decisions: unavailable until project init\n'
+  fi
+  printf 'Read-only: no configuration, plugins, or memory were changed.\n'
+}
+
+command_name="${1:-help}"
+if [ "$#" -gt 0 ]; then
+  shift
+fi
+
+repo_arg="$PWD"
+id_arg=""
+name_arg=""
+repository_arg=""
+memory_project_arg="codex-vault"
+approved="false"
+init_metadata_set="false"
+
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --repo)
+      [ "$#" -ge 2 ] || die "--repo requires a path"
+      repo_arg="$2"
+      shift 2
+      ;;
+    --id)
+      [ "$#" -ge 2 ] || die "--id requires a project ID"
+      id_arg="$2"
+      init_metadata_set="true"
+      shift 2
+      ;;
+    --name)
+      [ "$#" -ge 2 ] || die "--name requires a project name"
+      name_arg="$2"
+      init_metadata_set="true"
+      shift 2
+      ;;
+    --repository)
+      [ "$#" -ge 2 ] || die "--repository requires a portable identity"
+      repository_arg="$2"
+      init_metadata_set="true"
+      shift 2
+      ;;
+    --memory-project)
+      [ "$#" -ge 2 ] || die "--memory-project requires a project name"
+      memory_project_arg="$2"
+      init_metadata_set="true"
+      shift 2
+      ;;
+    --yes)
+      approved="true"
+      shift
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    *)
+      die "unknown option: $1"
+      ;;
+  esac
+done
+
+require_macos
+repo_root="$(normalize_repo_root "$repo_arg")"
+
+case "$command_name" in
+  init)
+    init_project "$repo_root"
+    ;;
+  resume|status)
+    [ "$approved" = "false" ] || die "$command_name is read-only and does not accept --yes"
+    [ "$init_metadata_set" = "false" ] ||
+      die "$command_name reads the manifest and does not accept init metadata"
+    if [ "$command_name" = "resume" ]; then
+      resume_project "$repo_root"
+    else
+      status_project "$repo_root"
+    fi
+    ;;
+  help|-h|--help)
+    usage
+    ;;
+  *)
+    die "unknown project command: $command_name"
+    ;;
+esac

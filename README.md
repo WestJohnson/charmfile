@@ -105,6 +105,23 @@ state.
 
 Normal `codex` remains unchanged. `charmfile-codex` opts into the profile.
 
+## Portable project continuity
+
+A repository can carry a small `.charmfile/project.toml` identity that maps it
+to normal Markdown in Charmfile Memory without embedding a private vault path:
+
+```sh
+charmfile init             # preview the manifest
+charmfile init --yes       # create it after approval
+charmfile resume           # Git state plus durable project context
+charmfile status           # layers, cached health, and freshness
+```
+
+Initialization never overwrites a differing manifest. `resume` and `status`
+are read-only and degrade explicitly when Memory has not been activated. They
+do not run live Cloud checks or add another service. See
+[Project Resume](docs/RESUME.md) for the manifest and command contract.
+
 ## Optional Playwright, without browser ambiguity
 
 When selected, `charmfile-browser` keeps two modes separate:
@@ -195,7 +212,8 @@ The gate checks plugin and skill structure, marketplace consistency, personal
 path and credential leaks, excluded integration content, shell syntax,
 macOS-only boundaries, safe profile behavior, Playwright readiness states,
 core, standard, browser, and full preset installation, selected-pack update
-preservation, and managed-file backups.
+preservation, portable project init/resume/status behavior, and managed-file
+backups.
 
 ## Project status
 
@@ -208,6 +226,7 @@ See:
 
 - [Architecture](docs/ARCHITECTURE.md)
 - [Product contract](docs/PRODUCT_CONTRACT.md)
+- [Project resume](docs/RESUME.md)
 - [Memory](docs/MEMORY.md)
 - [Cloud](docs/CLOUD.md)
 - [Pack catalog](docs/PACKS.md)

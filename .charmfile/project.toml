@@ -1,0 +1,16 @@
+# Charmfile portable project identity.
+schema = 1
+managed_by = "charmfile"
+
+[project]
+id = "charmfile"
+name = "Charmfile"
+canonical_id = "project:charmfile"
+
+[repository]
+canonical = "https://charmfile.com/git/charmfile.git"
+
+[memory]
+project = "codex-vault"
+path = "10 Projects/charmfile/Project.md"
+uri = "memory://codex-vault/10-projects/charmfile/project"

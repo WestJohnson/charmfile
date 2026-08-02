@@ -22,6 +22,22 @@ The portable profile is a named Codex layer selected through
 `charmfile-codex`. It overlays the user's base configuration without mutating
 it.
 
+Portable project continuity uses one repository-owned pointer instead of a new
+database or runtime:
+
+```text
+.charmfile/project.toml
+          |-- local Git state
+          |-- local Sidecar configuration -> normal Markdown project note
+          `-- installed packs + cached Sidecar health
+                                  |
+                        charmfile resume/status
+```
+
+The manifest is portable identity, not memory storage. The Markdown note stays
+human-visible, Sidecar remains the Memory engine, and the repository remains
+authoritative for code.
+
 ## Product boundaries
 
 - The default installation is Core plus Memory; Core remains useful by itself.
@@ -49,6 +65,9 @@ boundaries.
 ## Safety boundaries
 
 - Setup is plan-first and block-managed.
+- Project manifest creation is approval-gated, atomic, and non-overwriting.
+- Project resume and status commands are read-only and make unavailable state
+  explicit instead of triggering repair or cloud access.
 - Existing guidance receives an adjacent backup.
 - The PATH launcher directory is added through one bounded `.zprofile` block.
 - The base Codex configuration is never modified.

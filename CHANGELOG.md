@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased
+
+- Added a portable `.charmfile/project.toml` identity with plan-first,
+  approval-gated `charmfile init` creation and no automatic overwrite.
+- Added read-only `charmfile resume` output that combines the repository's Git
+  state with sanitized project continuity from Charmfile Memory.
+- Added read-only `charmfile status` output for installed layers, cached Memory
+  health, Cloud configuration, continuity freshness, and proposed decisions.
+- Added isolated lifecycle coverage for credential stripping, idempotence,
+  existing-manifest preservation, unavailable states, and read-only guarantees.
+
 ## 0.1.0-rc.6 - 2026-08-01
 
 - Consolidated the product contract around lightweight Core configuration,

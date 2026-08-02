@@ -139,6 +139,14 @@ run_case() {
       > "$case_root/launcher-doctor.txt"
   grep -Fq 'Charmfile result: healthy' "$case_root/launcher-doctor.txt"
 
+  case_command "$case_root" \
+    "$test_home/.local/bin/charmfile" status --repo "$case_root" \
+      > "$case_root/launcher-status.txt"
+  grep -Fq 'Charmfile status' "$case_root/launcher-status.txt"
+  grep -Fq 'Core: installed' "$case_root/launcher-status.txt"
+  grep -Fq 'Read-only: no configuration, plugins, or memory were changed.' \
+    "$case_root/launcher-status.txt"
+
   if [ "$expect_browser" = "true" ]; then
     case_command "$case_root" \
       "$test_home/.local/bin/charmfile" doctor --require-live-chrome \

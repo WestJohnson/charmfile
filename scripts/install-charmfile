@@ -45,6 +45,19 @@ ensure_jq() {
   require_command jq
 }
 
+run_codex_with_git_config() {
+  local xdg_git_config
+  xdg_git_config="${XDG_CONFIG_HOME:-$HOME/.config}/git/config"
+
+  if [ -n "${GIT_CONFIG_GLOBAL:-}" ] ||
+    [ -f "$HOME/.gitconfig" ] ||
+    [ -f "$xdg_git_config" ]; then
+    codex "$@"
+  else
+    GIT_CONFIG_GLOBAL=/dev/null codex "$@"
+  fi
+}
+
 core_script() {
   printf '%s/plugins/charmfile-core/skills/charmfile-setup/scripts/charmfile\n' "$1"
 }
@@ -441,7 +454,8 @@ case "$command_name" in
     ensure_jq
     prepare_codex_home
     marketplace_json="$(
-      codex plugin marketplace add "$marketplace_source" --json
+      run_codex_with_git_config \
+        plugin marketplace add "$marketplace_source" --json
     )" || die "Codex failed to register the charmfile marketplace"
     if ! printf '%s\n' "$marketplace_json" |
       jq -e '.marketplaceName == "charmfile"' >/dev/null; then
@@ -470,7 +484,8 @@ case "$command_name" in
     show_plan "$current_root" update
     source_type="$(marketplace_source_type)"
     if [ "$source_type" = "git" ]; then
-      codex plugin marketplace upgrade charmfile --json >/dev/null
+      run_codex_with_git_config \
+        plugin marketplace upgrade charmfile --json >/dev/null
     else
       printf 'Local marketplace: using the current checkout without a Git refresh.\n'
     fi

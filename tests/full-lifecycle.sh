@@ -129,6 +129,7 @@ run_case() {
   test -f "$test_home/.codex/AGENTS.md"
   test -f "$test_home/.codex/charmfile.config.toml"
   test -f "$test_home/.zprofile"
+  test ! -e "$test_home/.gitconfig"
   grep -Fq '# CHARMFILE:PATH:START' "$test_home/.zprofile"
   test -x "$test_home/.local/bin/charmfile"
   test -x "$test_home/.local/bin/charmfile-codex"

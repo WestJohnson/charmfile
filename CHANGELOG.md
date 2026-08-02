@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.0-rc.2 - 2026-08-01
+
+- Prevented public Git marketplace installs and updates from stalling when a
+  user has no global Git configuration file, without creating or overwriting
+  `~/.gitconfig`.
+
 ## 0.2.0-rc.1 - 2026-08-01
 
 - Added a portable `.charmfile/project.toml` identity with plan-first,

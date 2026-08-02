@@ -78,7 +78,7 @@ printf '%s\n' "$rc6_plugins" |
     [.installed[]
       | select(.pluginId | endswith("@charmfile"))
       | select(.installed == true and .enabled == true)
-      | .version == "0.2.0-rc.1"
+      | .version == "0.2.0-rc.2"
     ]
     | length == 8 and all
   ' >/dev/null

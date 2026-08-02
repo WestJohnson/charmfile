@@ -1,6 +1,6 @@
 {
   "name": "charmfile-threejs",
-  "version": "0.2.0-rc.1",
+  "version": "0.2.0-rc.2",
   "description": "Build Three.js scenes with focused guidance for geometry, materials, lighting, animation, and effects.",
   "author": {
     "name": "Charmfile contributors",

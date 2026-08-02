@@ -1,4 +1,4 @@
-# Charmfile 0.2.0-rc.1 Release Checklist
+# Charmfile 0.2.0-rc.2 Release Checklist
 
 ## Resume Kit contract
 
@@ -32,12 +32,12 @@
 - [x] Existing rc.5 full installation updates without losing any pack.
 - [x] Sidecar cached health below 80 remains a visible degraded state and the
       strict post-update doctor continues to fail below that threshold.
-- [ ] The 0.2.0-rc.1 archive is built from the clean signed release commit and
+- [ ] The 0.2.0-rc.2 archive is built from the clean signed release commit and
       passes checksum, secret, personal-path, and excluded-integration scans.
 
 ## Publication
 
-- [ ] Push the reviewed Charmfile commit and signed `v0.2.0-rc.1` tag to the
+- [ ] Push the reviewed Charmfile commit and signed `v0.2.0-rc.2` tag to the
       canonical self-hosted Git repository and GitHub mirror.
 - [ ] Publish the immutable archive and checksum before updating the mutable
       Charmfile release index.

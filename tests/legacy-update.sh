@@ -83,4 +83,4 @@ printf '%s\n' "$rc6_plugins" |
     | length == 8 and all
   ' >/dev/null
 
-printf '[ok] rc.5 full installation preserves all eight packs during 0.2 rc.1 update\n'
+printf '[ok] rc.5 full installation preserves all eight packs during 0.2 rc.2 update\n'

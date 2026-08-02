@@ -4,7 +4,7 @@ Charmfile is designed to be installed by an agent from a reviewed checkout.
 Clone the canonical repository:
 
 ```sh
-git clone https://ai.westhawaiimarketing.com/charmfile/git/charmfile.git
+git clone https://charmfile.com/git/charmfile.git
 cd charmfile
 ```
 

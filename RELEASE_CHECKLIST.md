@@ -1,56 +1,48 @@
-# Charmfile 0.1.0-rc.6 Release Checklist
+# Charmfile 0.2.0-rc.1 Release Checklist
 
-## Product contract
+## Resume Kit contract
 
-- [x] Core, Memory, Cloud, and optional capability-pack boundaries are explicit.
-- [x] The default preset is Core plus Memory without vault or cloud activation.
-- [x] Core-only, Browser, individual-pack, and full selections remain available.
-- [x] Existing installations preserve their installed Charmfile packs on update.
-- [x] Sidecar remains a separately versioned engine behind Charmfile Memory.
+- [x] `.charmfile/project.toml` contains only portable project identity and
+      vault-relative Memory routing.
+- [x] `charmfile init` is plan-first, approval-gated, atomic, idempotent, and
+      refuses to overwrite a differing manifest.
+- [x] `charmfile resume` combines Git and durable project context without
+      writing to the repository, Sidecar configuration, or vault.
+- [x] `charmfile status` reports installed layers, cached Memory health, Cloud
+      configuration presence, continuity freshness, and proposed decisions
+      without running live repair or cloud checks.
+- [x] Missing or inactive Memory produces an explicit unavailable state.
 
-## Sidecar 0.6.1 dependency
+## Product boundaries
 
-- [x] Deterministic Sidecar suite and Ruff validation pass.
-- [x] The reviewed `v0.6.1` commit and tag match the canonical self-hosted Git
-      repository and GitHub mirror.
-- [x] The public wheel, rollback wheel, checksums, and update index remain
-      available and checksum-valid.
-- [x] Local Sidecar doctor and benchmark remain healthy after the Charmfile
-      consolidation.
-- [x] Cloud doctor and benchmark are recorded separately and do not block
-      local-only Charmfile installation.
+- [x] Core, Memory, Cloud, and optional capability-pack boundaries remain
+      explicit.
+- [x] The default preset remains Core plus Memory without vault or cloud
+      activation.
+- [x] Updates continue to preserve the installed Charmfile pack set.
+- [x] Sidecar remains the separately versioned engine behind Charmfile Memory.
 
-Local Sidecar evidence: 164 tests and Ruff pass; doctor scores 95 with zero
-critical failures; benchmark scores 100. Cloud doctor is healthy with a fully
-synced replica. `cloud-benchmark` is a Linux deployment gate and cannot run on
-this macOS release workstation because `systemctl` is unavailable; it remains
-separate from the local-memory release gate.
-
-## Charmfile package
+## Package verification
 
 - [x] Repository, plugin, skill, privacy, credential, and shell validation pass.
-- [x] Core, standard, standard plus Browser, and full installs pass in isolated
-      Codex homes.
-- [x] Individual `--with PACK` selection and invalid-pack rejection pass.
-- [x] Updates preserve each isolated installation's exact pack count.
+- [x] Portable init, resume, status, preservation, and unavailable-state tests
+      pass in an isolated environment.
+- [x] Core, standard, Browser, individual-pack, and full installs pass in
+      isolated Codex homes.
 - [x] Existing rc.5 full installation updates without losing any pack.
-- [x] Sidecar health below 80 fails the strict post-update gate.
-- [x] The rc.6 archive is built from a clean tagged commit and passes checksum,
-      secret, personal-path, and excluded-integration scans.
+- [x] Sidecar cached health below 80 remains a visible degraded state and the
+      strict post-update doctor continues to fail below that threshold.
+- [ ] The 0.2.0-rc.1 archive is built from the clean signed release commit and
+      passes checksum, secret, personal-path, and excluded-integration scans.
 
 ## Publication
 
-- [x] Push the reviewed Charmfile commit and `v0.1.0-rc.6` tag to the canonical
-      self-hosted Git repository and GitHub mirror.
-- [x] Publish the immutable rc.6 archive and checksums before updating the
-      mutable Charmfile release index.
-- [x] Update the production release site through a timestamped rollback bundle.
-- [x] Verify homepage, docs, policies, Git refs, archive, checksum, standard
-      install, full-install update preservation, and rollback inputs over HTTPS.
+- [ ] Push the reviewed Charmfile commit and signed `v0.2.0-rc.1` tag to the
+      canonical self-hosted Git repository and GitHub mirror.
+- [ ] Publish the immutable archive and checksum before updating the mutable
+      Charmfile release index.
+- [ ] Update the production website through a timestamped rollback bundle.
+- [ ] Verify homepage, policies, Git refs, archive, checksum, clean install,
+      managed update, desktop/mobile UI, and rollback inputs over HTTPS.
 
-Release evidence: signed tag `v0.1.0-rc.6` resolves to `3d06730`; the published
-archive SHA-256 is `1173c34fdcb97abd41889fedbca9bf9e6b36d9b462cba4346c2cab24203850f2`.
-A clean live Git-backed standard installation selected exactly Core and Memory;
-a live Git-backed full installation and managed update preserved all eight
-packs. Production uses the rc.6 site bundle with rollback inputs at
-`/root/charmfile-deploy-backups/20260801T202309Z-charmfile-rc6`.
+Publication evidence is recorded only after every public check completes.

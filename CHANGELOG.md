@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.2.0-rc.1 - 2026-08-01
 
 - Added a portable `.charmfile/project.toml` identity with plan-first,
   approval-gated `charmfile init` creation and no automatic overwrite.
@@ -10,6 +10,8 @@
   health, Cloud configuration, continuity freshness, and proposed decisions.
 - Added isolated lifecycle coverage for credential stripping, idempotence,
   existing-manifest preservation, unavailable states, and read-only guarantees.
+- Changed the canonical source, dependency, and installation references to the
+  `charmfile.com` release channel.
 
 ## 0.1.0-rc.6 - 2026-08-01
 

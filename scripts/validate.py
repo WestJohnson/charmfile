@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 PLUGINS = ROOT / "plugins"
 MARKETPLACE = ROOT / ".agents" / "plugins" / "marketplace.json"
 INSTALL_SKILL = ROOT / ".agents" / "skills" / "install-charmfile"
-RELEASE_VERSION = "0.1.0-rc.6"
+RELEASE_VERSION = "0.2.0-rc.1"
 SIDECAR_VERSION = "0.6.1"
 
 EXPECTED_PLUGINS = {

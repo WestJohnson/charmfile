@@ -55,7 +55,7 @@ Requirements:
 Clone the canonical self-hosted Git repository:
 
 ```sh
-git clone https://ai.westhawaiimarketing.com/charmfile/git/charmfile.git
+git clone https://charmfile.com/git/charmfile.git
 cd charmfile
 ```
 
@@ -161,7 +161,7 @@ new Codex session after every update.
 ## Charmfile Memory
 
 The default Memory pack guides installation and operation of
-[Codex Obsidian Sidecar](https://ai.westhawaiimarketing.com/charmfile/git/codex-obsidian-sidecar.git).
+[Codex Obsidian Sidecar](https://charmfile.com/git/codex-obsidian-sidecar.git).
 The Sidecar:
 
 - curates sanitized, evidence-backed outcomes into normal Markdown;
@@ -217,9 +217,9 @@ backups.
 
 ## Project status
 
-`0.1.0-rc.6` release candidate. The canonical Git repository, checksummed
+`0.2.0-rc.1` release candidate. The canonical Git repository, checksummed
 archives, policy documents, and Sidecar update channel are self-hosted at
-`ai.westhawaiimarketing.com`. GitHub remains a public mirror. Charmfile has not
+`charmfile.com`. GitHub remains a public mirror. Charmfile has not
 been submitted to the universal plugin directory.
 
 See:
